@@ -1,5 +1,6 @@
 ﻿using NLog;
 using System;
+using System.Configuration;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -8,17 +9,26 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Globalization;
 
 namespace FuzzySearchExcel
 {
     public partial class MainForm : Form
     {
-        private readonly Logger logger = LogManager.GetCurrentClassLogger();
-        private readonly FuzzyProcessor fuzzyProcessor = new FuzzyProcessor();
+        private const double DEFAULT_FUZZYNESS = 0.7;
+
+        private readonly Logger _logger = LogManager.GetCurrentClassLogger();
+        private readonly FuzzyProcessor _fuzzyProcessor = new FuzzyProcessor();
+        private readonly double _fuzzyness;
 
         public MainForm()
         {
             InitializeComponent();
+
+            var appSettings = ConfigurationManager.AppSettings;
+            string result = appSettings["fuzzyness"] ?? string.Empty;
+            if (double.TryParse(result, NumberStyles.Any, CultureInfo.InvariantCulture, out _fuzzyness) == false)
+                _fuzzyness = DEFAULT_FUZZYNESS;
         }
 
         /// <summary>
@@ -28,7 +38,7 @@ namespace FuzzySearchExcel
         /// <param name="e"></param>
         private void OpenFileToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            logger.Trace("Открытие файла");
+            _logger.Trace("Открытие файла");
 
             using (OpenFileDialog dialog = new OpenFileDialog())
             {
@@ -36,12 +46,12 @@ namespace FuzzySearchExcel
                 dialog.RestoreDirectory = true;
                 if (dialog.ShowDialog() != DialogResult.OK)
                 {
-                    logger.Debug("Отмена открытия файла");
+                    _logger.Debug("Отмена открытия файла");
                     return;
                 }
-                logger.Debug($"Открыт файл {dialog.FileName}");
+                _logger.Debug($"Открыт файл {dialog.FileName}");
 
-                string[] columns = fuzzyProcessor.ReadExcelFile(dialog.FileName);
+                string[] columns = _fuzzyProcessor.ReadExcelFile(dialog.FileName);
                 cbColumn.Items.Clear();
                 cbColumn.Items.AddRange(columns);
                 cbColumn.SelectedIndex = 70; // TODO 1
@@ -61,7 +71,7 @@ namespace FuzzySearchExcel
                 return;
             }
 
-            fuzzyProcessor.ProcessAutoCorrection(cbColumn.SelectedIndex + 1);
+            _fuzzyProcessor.ProcessAutoCorrection(cbColumn.SelectedIndex + 1, _fuzzyness);
         }
     }
 }

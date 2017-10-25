@@ -58,7 +58,7 @@
             // openFileToolStripMenuItem
             // 
             this.openFileToolStripMenuItem.Name = "openFileToolStripMenuItem";
-            this.openFileToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.openFileToolStripMenuItem.Size = new System.Drawing.Size(121, 22);
             this.openFileToolStripMenuItem.Text = "Открыть";
             this.openFileToolStripMenuItem.Click += new System.EventHandler(this.OpenFileToolStripMenuItem_Click);
             // 
@@ -81,11 +81,11 @@
             // 
             // btnProcess
             // 
-            this.btnProcess.Location = new System.Drawing.Point(248, 40);
+            this.btnProcess.Location = new System.Drawing.Point(248, 38);
             this.btnProcess.Name = "btnProcess";
             this.btnProcess.Size = new System.Drawing.Size(75, 23);
             this.btnProcess.TabIndex = 3;
-            this.btnProcess.Text = "Коррекция";
+            this.btnProcess.Text = "Обработка";
             this.btnProcess.UseVisualStyleBackColor = true;
             this.btnProcess.Click += new System.EventHandler(this.btnProcess_Click);
             // 

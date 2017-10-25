@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FuzzySearchExcel", "FuzzySe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FuzzySearch", "FuzzySearch\FuzzySearch.csproj", "{5A50B181-89FF-4221-8B75-6BBD2ABBE92D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FuzzyUnitTest", "FuzzyUnitTest\FuzzyUnitTest.csproj", "{BDFB4276-7347-47F9-8462-DECF1F51038B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{5A50B181-89FF-4221-8B75-6BBD2ABBE92D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5A50B181-89FF-4221-8B75-6BBD2ABBE92D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5A50B181-89FF-4221-8B75-6BBD2ABBE92D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BDFB4276-7347-47F9-8462-DECF1F51038B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BDFB4276-7347-47F9-8462-DECF1F51038B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BDFB4276-7347-47F9-8462-DECF1F51038B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BDFB4276-7347-47F9-8462-DECF1F51038B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

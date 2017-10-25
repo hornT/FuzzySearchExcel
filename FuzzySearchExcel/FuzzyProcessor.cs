@@ -12,11 +12,13 @@ namespace FuzzySearchExcel
 {
     internal class FuzzyProcessor
     {
-        private readonly Logger logger = LogManager.GetCurrentClassLogger();
+        private readonly Logger _logger = LogManager.GetCurrentClassLogger();
+        private readonly Fuzzy _fuzzy = new Fuzzy();
 
         private int _firstRowIndex;
         private int _lastRowIndex;
         private object[,] _fullRangeValues;
+        private string[] _values;
 
         /// <summary>
         /// Работа с файлом
@@ -42,7 +44,7 @@ namespace FuzzySearchExcel
                 _lastRowIndex = _fullRangeValues.GetLength(0);
                 var lastColumnIndex = _fullRangeValues.GetLength(1);
 
-                logger.Info($"Строки с {_firstRowIndex} по {_lastRowIndex}. Колонки с {firstColIndex} по {lastColumnIndex}");
+                _logger.Info($"Строки с {_firstRowIndex} по {_lastRowIndex}. Колонки с {firstColIndex} по {lastColumnIndex}");
 
                 // Заполняем список колонок
                 columns = new string[lastColumnIndex];
@@ -59,33 +61,55 @@ namespace FuzzySearchExcel
         /// Выполнить автокоррекцию
         /// </summary>
         /// <param name="columnIndex"></param>
-        public void ProcessAutoCorrection(int columnIndex)
+        public void ProcessAutoCorrection(int columnIndex, double fuzzyness)
         {
-            Fuzzy fuzzy = new Fuzzy();
-
             // Вычитываем все значения из выбранной колонки
-            string[] values = new string[_lastRowIndex - _firstRowIndex];
+            _values = new string[_lastRowIndex - _firstRowIndex];
             for (int i = _firstRowIndex + 1; i <= _lastRowIndex; i++)
             {
-                values[i - _firstRowIndex - 1] = _fullRangeValues[i, columnIndex] as string;
+                _values[i - _firstRowIndex - 1] = _fullRangeValues[i, columnIndex] as string;
             }
 
             // Сначала выполняем замену для ранее заполненных замен
-            Parallel.For(0, values.Length, i =>
-            {
-                string replaceName;
-                if (fuzzy.CorrectionNames.TryGetValue(values[i], out replaceName))
-                    values[i] = replaceName;
-            });
+            AutoCorrection();
 
             // Ищем похожие слова
-            HashSet<string> allNames = new HashSet<string>(values);
-            logger.Info($"Осталось {allNames.Count} уникальных названий");
+            HashSet<string> allNames = new HashSet<string>(_values);
+            _logger.Info($"Осталось {allNames.Count} уникальных названий");
+
+            HashSet<int> passIndexes = new HashSet<int>();
+            string[] allNamesArr = allNames.ToArray();
+            for(int i = 0; i < allNamesArr.Length; i++)
+            {
+                // Пропускаем уже задействованные слова
+                if (passIndexes.Contains(i))
+                    continue;
+
+                List<string> sameNames = Levenshtein.Search(allNamesArr[i], allNamesArr, fuzzyness);
+                if(sameNames.Count > 1)
+                {
+                    foreach (string name in sameNames)
+                        passIndexes.Add(Array.IndexOf(allNamesArr, name));
+                }
+            }
 
             //var firstCell = _sheet.Cells[startRowIndex, checkColumnIndex];
             //var lastCell = _sheet.Cells[startRowIndex + _rowCheckResults.Count - 1, checkColumnIndex];
             //var checkColumnRange = _sheet.Range(firstCell, lastCell);
             //checkColumnRange.Value = valuesArr;
+        }
+
+        /// <summary>
+        /// Замена значений
+        /// </summary>
+        public void AutoCorrection()
+        {
+            Parallel.For(0, _values.Length, i =>
+            {
+                string replaceName;
+                if (_fuzzy.CorrectionNames.TryGetValue(_values[i], out replaceName))
+                    _values[i] = replaceName;
+            });
         }
     }
 }
