@@ -4,9 +4,9 @@ using System.Linq;
 
 namespace FuzzySearch
 {
-    public static class Levenshtein
+    public static partial class Metrics
     {
-        public static int LevenshteinDistance(string src, string dest)
+        public static double LevenshteinDistance(string src, string dest)
         {
             int[,] d = new int[src.Length + 1, dest.Length + 1];
             int i, j, cost;
@@ -46,22 +46,25 @@ namespace FuzzySearch
                 }
             }
 
-            return d[str1.Length, str2.Length];
+            int distance = d[str1.Length, str2.Length];
+            int length = Math.Max(str1.Length, str2.Length);
+
+            return 1.0 - (double)distance / length;
         }
 
-        public static string[] Search(string word, IEnumerable<string> wordList, double fuzzyness)
-        {
-            string[] foundWords =
-            (
-                from s in wordList
-                let levenshteinDistance = LevenshteinDistance(word, s)
-                let length = Math.Max(s.Length, word.Length)
-                let score = 1.0 - (double)levenshteinDistance / length
-                where score > fuzzyness
-                select s
-            ).ToArray();
 
-            return foundWords;
-        }
+
+        //public static string[] Search(string word, IEnumerable<string> wordList, double fuzzyness)
+        //{
+        //    string[] foundWords =
+        //    (
+        //        from s in wordList
+        //        let levenshteinDistance = Distance(word, s)
+        //        where levenshteinDistance > fuzzyness
+        //        select s
+        //    ).ToArray();
+
+        //    return foundWords;
+        //}
     }
 }

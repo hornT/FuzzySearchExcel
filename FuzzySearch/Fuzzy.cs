@@ -144,7 +144,21 @@ namespace FuzzySearch
         /// <returns></returns>
         private string[] Search(string value, IEnumerable<string> wordList, double fuzzyness)
         {
-            return Levenshtein.Search(value, wordList, fuzzyness);
+            string[] result = wordList
+                .Where(x =>
+                    Metrics.HammingDistance(value.ToUpper(), x.ToUpper()) > fuzzyness ||
+                    Metrics.LevenshteinDistance(value.ToUpper(), x.ToUpper()) > fuzzyness ||
+                    //Metrics.OverlapCoefficient(value.ToUpper(), x.ToUpper()) > fuzzyness ||
+                    Metrics.RatcliffObershelpSimilarity(value.ToUpper(), x.ToUpper()) > fuzzyness ||
+                    Metrics.SorensenDiceIndex(value.ToUpper(), x.ToUpper()) > fuzzyness ||
+                    Metrics.TanimotoCoefficient(value.ToUpper(), x.ToUpper()) > fuzzyness ||
+                    //Metrics.JaccardDistance(value.ToUpper(), x.ToUpper()) > fuzzyness ||
+                    false
+                    )
+                .ToArray();
+
+            return result;
+            //return Levenshtein.Search(value, wordList, fuzzyness);
         }
 
         /// <summary>
