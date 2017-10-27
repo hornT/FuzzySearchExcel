@@ -49,9 +49,9 @@ namespace FuzzySearch
             return d[str1.Length, str2.Length];
         }
 
-        public static List<string> Search(string word, IEnumerable<string> wordList, double fuzzyness)
+        public static string[] Search(string word, IEnumerable<string> wordList, double fuzzyness)
         {
-            List<string> foundWords =
+            string[] foundWords =
             (
                 from s in wordList
                 let levenshteinDistance = LevenshteinDistance(word, s)
@@ -59,7 +59,7 @@ namespace FuzzySearch
                 let score = 1.0 - (double)levenshteinDistance / length
                 where score > fuzzyness
                 select s
-            ).ToList();
+            ).ToArray();
 
             return foundWords;
         }

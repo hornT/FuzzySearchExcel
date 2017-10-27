@@ -4,8 +4,6 @@ using NLog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Application = NetOffice.ExcelApi.Application;
 
 namespace FuzzySearchExcel
@@ -17,8 +15,10 @@ namespace FuzzySearchExcel
 
         private int _firstRowIndex;
         private int _lastRowIndex;
+        private int _columnIndex;
         private object[,] _fullRangeValues;
-        private string[] _values;
+        private Workbook _excelBook;
+        private Worksheet _sheet;
 
         /// <summary>
         /// Работа с файлом
@@ -26,6 +26,8 @@ namespace FuzzySearchExcel
         /// <param name="fileName"></param>
         public string[] ReadExcelFile(string fileName)
         {
+            OnClose();
+
             var app = new Application
             {
                 DisplayAlerts = false,
@@ -34,15 +36,17 @@ namespace FuzzySearchExcel
             };
 
             string[] columns;
-            using (var workbook = app.Workbooks.Open(fileName))
+            try
             {
-                Worksheet sheet = workbook.Sheets.FirstOrDefault() as Worksheet;
-                var fullRange = sheet.UsedRange;
+                _excelBook = app.Workbooks.Open(fileName);
+                _sheet = _excelBook.Sheets.FirstOrDefault() as Worksheet;
+                var fullRange = _sheet.UsedRange;
                 _firstRowIndex = fullRange.Row;
                 var firstColIndex = fullRange.Column;
                 _fullRangeValues = (object[,])fullRange.Value;
                 _lastRowIndex = _fullRangeValues.GetLength(0);
                 var lastColumnIndex = _fullRangeValues.GetLength(1);
+                _excelBook.Close();
 
                 _logger.Info($"Строки с {_firstRowIndex} по {_lastRowIndex}. Колонки с {firstColIndex} по {lastColumnIndex}");
 
@@ -51,65 +55,76 @@ namespace FuzzySearchExcel
                 for (int i = firstColIndex; i <= lastColumnIndex; i++)
                     columns[i - firstColIndex] = _fullRangeValues[_firstRowIndex, i] as string;
 
-                //workbook.Save();
+                return columns;
             }
-
-            return columns;
+            catch(Exception ex)
+            {
+                _logger.Error(ex);
+                throw;
+            }
         }
 
         /// <summary>
         /// Выполнить автокоррекцию
         /// </summary>
         /// <param name="columnIndex"></param>
-        public void ProcessAutoCorrection(int columnIndex, double fuzzyness)
+        public PrepareResult PrepareAutoCorrection(int columnIndex, double fuzzyness, double autoCorrectionFuzzyness)
         {
             // Вычитываем все значения из выбранной колонки
-            _values = new string[_lastRowIndex - _firstRowIndex];
+            _columnIndex = columnIndex;
+            string[] values = new string[_lastRowIndex - _firstRowIndex];
             for (int i = _firstRowIndex + 1; i <= _lastRowIndex; i++)
             {
-                _values[i - _firstRowIndex - 1] = _fullRangeValues[i, columnIndex] as string;
+                values[i - _firstRowIndex - 1] = _fullRangeValues[i, _columnIndex] as string;
             }
 
-            // Сначала выполняем замену для ранее заполненных замен
-            AutoCorrection();
-
-            // Ищем похожие слова
-            HashSet<string> allNames = new HashSet<string>(_values);
-            _logger.Info($"Осталось {allNames.Count} уникальных названий");
-
-            HashSet<int> passIndexes = new HashSet<int>();
-            string[] allNamesArr = allNames.ToArray();
-            for(int i = 0; i < allNamesArr.Length; i++)
-            {
-                // Пропускаем уже задействованные слова
-                if (passIndexes.Contains(i))
-                    continue;
-
-                List<string> sameNames = Levenshtein.Search(allNamesArr[i], allNamesArr, fuzzyness);
-                if(sameNames.Count > 1)
-                {
-                    foreach (string name in sameNames)
-                        passIndexes.Add(Array.IndexOf(allNamesArr, name));
-                }
-            }
-
-            //var firstCell = _sheet.Cells[startRowIndex, checkColumnIndex];
-            //var lastCell = _sheet.Cells[startRowIndex + _rowCheckResults.Count - 1, checkColumnIndex];
-            //var checkColumnRange = _sheet.Range(firstCell, lastCell);
-            //checkColumnRange.Value = valuesArr;
+            return _fuzzy.Prepare(values, fuzzyness, autoCorrectionFuzzyness);
         }
 
         /// <summary>
-        /// Замена значений
+        /// Добавить пользовательские занчения замены
         /// </summary>
-        public void AutoCorrection()
+        /// <param name="keyWord"></param>
+        /// <param name="replaceWords"></param>
+        public void Add(string keyWord, IEnumerable<string> replaceWords)
         {
-            Parallel.For(0, _values.Length, i =>
+            _fuzzy.Add(keyWord, replaceWords);
+        }
+
+        /// <summary>
+        /// Сохранить результат
+        /// </summary>
+        public void Save()
+        {
+            if (_excelBook == null || _sheet == null || _fuzzy.Values == null)
+                return;
+
+            // Записываем измененные значения в файл
+            var firstCell = _sheet.Cells[_firstRowIndex, _columnIndex];
+            var lastCell = _sheet.Cells[_lastRowIndex, _columnIndex];
+            var columnRange = _sheet.Range(firstCell, lastCell);
+
+            columnRange.Value = _fuzzy.Values;
+
+            _excelBook.Save();
+        }
+
+        /// <summary>
+        /// Действие перед закрытием
+        /// </summary>
+        public void OnClose()
+        {
+            if (_excelBook == null)
+                return;
+
+            try
             {
-                string replaceName;
-                if (_fuzzy.CorrectionNames.TryGetValue(_values[i], out replaceName))
-                    _values[i] = replaceName;
-            });
+                _excelBook.Close();
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex);
+            }
         }
     }
 }
