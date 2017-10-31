@@ -1,0 +1,75 @@
+﻿html{
+    height: 100%;
+}
+body {
+    /*padding-top: 50px;
+    padding-bottom: 20px;*/
+    height: 100%;
+    margin: 0;
+}
+
+/* Set padding to keep content from hitting the edges */
+.body-content {
+    padding-left: 15px;
+    padding-right: 15px;
+    
+    position: relative;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+/* Override the default bootstrap behavior where horizontal description lists 
+   will truncate terms that are too long to fit in the left column 
+*/
+.dl-horizontal dt {
+    white-space: normal;
+}
+
+/* Set width on the form input elements since they're 100% wide by default */
+input,
+select,
+textarea {
+    max-width: 280px;
+}
+
+#dropZone.hover {
+    background: #ddd;
+    border-color: #aaa;
+}
+
+#dropZone.error {
+    background: #faa;
+    border-color: #f00;
+}
+
+#dropZone.drop {
+    background: #afa;
+    border-color: #0f0;
+}
+
+.input-file{
+    visibility: hidden;
+}
+.drop-zone {
+    cursor: pointer;
+    border: 2px dashed;
+    height: 100px;
+    width: 80%;
+    margin: auto;
+    text-align: center; 
+}
+.column-selector{
+    width: 500px;
+}
+.variants-choose {
+    width: 500px;
+}
+.log {
+    height: 200px;
+    border: 1px solid;
+    bottom: 10px;
+    position: absolute;
+    right: 15px;
+    left: 15px;
+    overflow-y: scroll;
+}

@@ -1,0 +1,32 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+
+<input type="file" id="fileInput" onchange="fileChange(event)" class="input-file">
+<div id="dropZone" class="drop-zone" onclick="dropZoneOnClick()">Нажмите, или перетащите файл сюда</div>
+
+<div>
+    <div>Колонка</div>
+    <select id="column" class="column-selector"></select>
+    <button onclick="ProcessFile()">Обработка</button>
+    <button onclick="DownloadFile()">Сохранить</button>
+</div>
+
+<div>
+    <div>
+        <span>Количество вариантов: </span>
+        <span id="variantsCount">0</span>
+    </div>
+    <select id="variantsChoose" class="variants-choose" size="10"></select>
+    <button onclick="Next()">Пропустить</button>
+    <button onclick="Remove()">Исключить</button>
+    <button onclick="AddValue()">Добавить</button>
+</div>
+
+
+<div id="log" class="log"></div>    
+
+@section scripts
+    {
+    <script src="~/Scripts/App.js"></script>
+}

@@ -26,3 +26,4 @@ bld/
 .vs/
 
 packages/
+/Web/App_Data
