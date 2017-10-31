@@ -12,30 +12,42 @@ namespace FuzzySearch
     /// </summary>
     public class Fuzzy
     {
-        private const string FILE_NAME = "corrections.xml";
+        public const string FILE_NAME = "corrections.xml";
 
         private readonly Logger _logger = LogManager.GetCurrentClassLogger();
+        private readonly object _correctionsLock = new object();
+        private readonly string _fileName;
 
-        /// <summary>
-        /// Значения для замены
-        /// </summary>
-        public string[] Values { get; private set; }
+        ///// <summary>
+        ///// Значения для замены
+        ///// </summary>
+        //public string[] Values { get; private set; }
 
         /// <summary>
         /// Словарь для автозамен
         /// </summary>
         public readonly Dictionary<string, string> CorrectionNames;
 
-        public Fuzzy()
+        public Fuzzy() : this(FILE_NAME)
         {
+
+        }
+
+        public Fuzzy(string fileName)
+        {
+            _fileName = fileName;
+
             // Вычитываем файл с автозаменами
-            if (File.Exists(FILE_NAME))
+            lock (_correctionsLock)
             {
-                string text = File.ReadAllText(FILE_NAME);
-                CorrectionNames = JsonConvert.DeserializeObject<Dictionary<string, string>>(text);
+                if (File.Exists(_fileName))
+                {
+                    string text = File.ReadAllText(_fileName);
+                    CorrectionNames = JsonConvert.DeserializeObject<Dictionary<string, string>>(text);
+                }
+                else
+                    CorrectionNames = new Dictionary<string, string>();
             }
-            else
-                CorrectionNames = new Dictionary<string, string>();
         }
 
         /// <summary>
@@ -48,18 +60,18 @@ namespace FuzzySearch
         /// <returns></returns>
         public PrepareResult Prepare(IEnumerable<string> values, double fuzzyness, double autoCorrectionFuzzyness)
         {
-            Values = values.ToArray();
+            var valuesArr = values.ToArray();
 
             // Прямая замена
-            HashSet<string> replacementLog = Replace();
+            HashSet<string> replacementLog = Replace(valuesArr);
 
             // Замена очень похожих слов
-            Dictionary<string, string> autoCorrectionResult = AutoCorrection(autoCorrectionFuzzyness);
+            Dictionary<string, string> autoCorrectionResult = AutoCorrection(autoCorrectionFuzzyness, valuesArr);
             if(autoCorrectionResult.Count > 0)
-                Replace();
+                Replace(valuesArr);
 
             // Ищем похожие слова
-            HashSet<string> allNames = new HashSet<string>(Values);
+            HashSet<string> allNames = new HashSet<string>(valuesArr);
             _logger.Info($"Осталось {allNames.Count} уникальных названий");
 
             HashSet<int> passIndexes = new HashSet<int>();
@@ -88,17 +100,17 @@ namespace FuzzySearch
         /// <summary>
         /// Замена значений на основе ранее принятых решений
         /// </summary>
-        private HashSet<string> Replace()
+        public HashSet<string> Replace(string[] values)
         {
             var result = new HashSet<string>();
 
-            for (int i = 0; i < Values.Length; i++)
+            for (int i = 0; i < values.Length; i++)
             {
                 string replaceName;
-                if (CorrectionNames.TryGetValue(Values[i], out replaceName))
+                if (CorrectionNames.TryGetValue(values[i], out replaceName))
                 {
-                    result.Add(Values[i]);
-                    Values[i] = replaceName;
+                    result.Add(values[i]);
+                    values[i] = replaceName;
                 }
             }
 
@@ -110,11 +122,11 @@ namespace FuzzySearch
         /// </summary>
         /// <param name="fuzzyness"></param>
         /// <returns></returns>
-        private Dictionary<string, string> AutoCorrection(double fuzzyness)
+        private Dictionary<string, string> AutoCorrection(double fuzzyness, string[] values)
         {
             Dictionary<string, string> result = new Dictionary<string, string>();
 
-            HashSet<string> allNames = new HashSet<string>(Values);
+            HashSet<string> allNames = new HashSet<string>(values);
             string[] keyWords = CorrectionNames.Values.ToArray();
 
             foreach(string keyWord in keyWords)
@@ -126,9 +138,12 @@ namespace FuzzySearch
                     string replaceWords = string.Join("; ", sameNames);
                     result[replaceWords] = keyWord;
 
-                    // Добавляем новые значения в словарь для дальнейшей замены
-                    foreach (string sameName in sameNames)
-                        CorrectionNames[sameName] = keyWord;
+                    //// Добавляем новые значения в словарь для дальнейшей замены
+                    //lock (_correctionsLock)
+                    //{
+                    //    foreach (string sameName in sameNames)
+                    //        CorrectionNames[sameName] = keyWord;
+                    //}
                 }
             }
 
@@ -168,12 +183,15 @@ namespace FuzzySearch
         /// <param name="replaceWords"></param>
         public void Add(string keyWord, IEnumerable<string> replaceWords)
         {
-            foreach (string replaceWord in replaceWords)
-                CorrectionNames[replaceWord] = keyWord;
+            lock (_correctionsLock)
+            {
+                foreach (string replaceWord in replaceWords)
+                    CorrectionNames[replaceWord] = keyWord;
 
-            Save();
+                Save();
+            }
 
-            Replace();
+            //Replace();
         }
 
         /// <summary>
@@ -182,7 +200,7 @@ namespace FuzzySearch
         public void Save()
         {
             string text = JsonConvert.SerializeObject(CorrectionNames);
-            File.WriteAllText(FILE_NAME, text);
+            File.WriteAllText(_fileName, text);
         }
     }
 }

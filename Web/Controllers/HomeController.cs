@@ -18,13 +18,20 @@ namespace Web.Controllers
         private const string LAST_ROW_INDEX_KEY = "lastRowIndex";
         private const string COLUMN_INDEX_KEY = "columnIndex";
         private const string FULL_RANGE_VALUES_KEY = "fullRangeValues";
+        private const string VALUES_KEY = "values";
 
         // TODO config
         private const double fuzzyness = 0.7;
         private const double autoFuzzyness = 0.9;
 
         private readonly Logger _logger = LogManager.GetCurrentClassLogger();
-        private readonly Fuzzy _fuzzy = new Fuzzy();
+        private readonly Fuzzy _fuzzy;
+
+        public HomeController()
+        {
+            string fileName = Path.Combine(HttpRuntime.AppDomainAppPath, "App_Data", Fuzzy.FILE_NAME);
+            _fuzzy = new Fuzzy(fileName);
+        }
 
         public ActionResult Index()
         {
@@ -75,9 +82,8 @@ namespace Web.Controllers
                 var fullRangeValues = (object[,])fullRange.Value;
                 int lastRowIndex = fullRangeValues.GetLength(0);
                 var lastColumnIndex = fullRangeValues.GetLength(1);
-
                 
-                excelBook.Close();
+                excelBook.Close(0);
                 app.Quit();
 
                 _logger.Info($"Строки с {firstRowIndex} по {lastRowIndex}. Колонки с {firstColIndex} по {lastColumnIndex}");
@@ -131,8 +137,67 @@ namespace Web.Controllers
             {
                 values[i - firstRowIndex - 1] = fullRangeValues[i, columnIndex] as string;
             }
+            Session[VALUES_KEY] = values;
 
             return _fuzzy.Prepare(values, fuzzyness, autoCorrectionFuzzyness);
+        }
+
+        /// <summary>
+        /// Добавить компанию в базу
+        /// </summary>
+        /// <param name="values"></param>
+        /// <param name="selectedValue"></param>
+        /// <returns></returns>
+        public void AddCompany(string[] values, string keyWord)
+        {
+            _logger.Info($"Добавление компании для замены. {string.Join("|", values)} будут заменены на {keyWord}");
+
+            var replaceWords = new HashSet<string>(values);
+            replaceWords.Remove(keyWord);
+
+            _fuzzy.Add(keyWord, replaceWords);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public FileResult DownloadFile()
+        {
+            string fileName = (string)Session[FILE_KEY];
+
+            var app = new Application
+            {
+                DisplayAlerts = false,
+                ScreenUpdating = false,
+                IgnoreRemoteRequests = true
+            };
+
+            try
+            {
+                var excelBook = app.Workbooks.Open(fileName);
+                var sheet = excelBook.Sheets.FirstOrDefault() as Worksheet;
+
+                var fullRange = sheet.UsedRange;
+                int firstRowIndex = fullRange.Row;
+                var firstColIndex = fullRange.Column;
+                var fullRangeValues = (object[,])fullRange.Value;
+                int lastRowIndex = fullRangeValues.GetLength(0);
+                var lastColumnIndex = fullRangeValues.GetLength(1);
+
+                excelBook.Close(0);
+                app.Quit();
+
+                _logger.Info($"Строки с {firstRowIndex} по {lastRowIndex}. Колонки с {firstColIndex} по {lastColumnIndex}");
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex);
+                throw;
+            }
+
+            byte[] fileBytes = System.IO.File.ReadAllBytes(fileName);
+            return File(fileBytes, System.Net.Mime.MediaTypeNames.Application.Octet, Path.GetFileName(fileName));
         }
     }
 }

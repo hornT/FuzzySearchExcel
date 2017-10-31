@@ -219,7 +219,5 @@ namespace FuzzySearchExcel
         {
             _fuzzyProcessor.OnClose();
         }
-
-        
     }
 }

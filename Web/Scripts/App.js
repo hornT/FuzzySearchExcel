@@ -91,7 +91,7 @@ function InitColumns(columns) {
 function ProcessFile() {
     const columnIndex = document.querySelector('#column').selectedIndex;
     if (columnIndex < 0) {
-        AddLog('Не выбрана колонка');
+        AddLog('Не выбрана колонка'); // TODO error
         return;
     }
 
@@ -108,7 +108,7 @@ function ProcessFile() {
         },
         error: function (q, w, e, r) {
             console.log('error');
-            AddLog('Произошла ошика. Подробности в консоли');
+            AddLog('Произошла ошика. Подробности в консоли'); // TODO error
         }
     });
 }
@@ -134,6 +134,9 @@ function ShowVariants(prepareResult) {
  * @param {any} replacedValues
  */
 function AddReplaceLog(replacedValues) {
+    if (!replacedValues)
+        return;
+
     AddLog('Произведена автозамена:');
     replacedValues.forEach(elem => {
         AddLog(elem);
@@ -152,6 +155,9 @@ function DownloadFile() {
  */
 function Next() {
 
+    const variantsChoose = document.querySelector('#variantsChoose');
+    variantsChoose.innerHTML = '';
+
     if (variantIndex < 0) {
         return;
     }
@@ -159,15 +165,12 @@ function Next() {
     const variantsCount = document.querySelector('#variantsCount');
     variantsCount.innerHTML = variantIndex + 1;
 
-    const variantsChoose = document.querySelector('#variantsChoose');
-    variantsChoose.innerHTML = '';
-
     const variants = possibleReplaces[variantIndex--];
 
     variants.forEach((elem, ind) => {
         const option = document.createElement('option');
         option.innerHTML = elem;
-        option.value = ind;
+        option.value = elem;
 
         variantsChoose.appendChild(option);
     });
@@ -187,6 +190,30 @@ function Remove() {
  */
 function AddValue() {
     const variantsChoose = document.querySelector('#variantsChoose');
+    if (variantsChoose.selectedIndex < 0) {
+        AddLog('Не выбран вариант'); // TODO error
+        return;
+    }
+
+    //const values = $("#variantsChoose option").map((v, i) => i.value);
+    const options = $('#variantsChoose option');
+    const values = $.map(options, v => v.value);
+    const selectedValue = variantsChoose.selectedOptions[0].value;
+
+    $.ajax({
+        type: "POST",
+        url: "/Home/AddCompany",
+        data: { values: values, keyWord: selectedValue },
+        success: function (res) {
+            //AddLog(res.message);
+        },
+        error: function (q, w, e, r) {
+            console.log('error');
+            AddLog('Произошла ошика. Подробности в консоли'); // TODO error
+        }
+    });
+
+    Next();
 }
 
 
