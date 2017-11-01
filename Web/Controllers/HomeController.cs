@@ -1,11 +1,13 @@
 ﻿using FuzzySearch;
 using NetOffice.ExcelApi;
 using NLog;
+using NPOI.HSSF.UserModel;
+using NPOI.SS.UserModel;
+using NPOI.XSSF.UserModel;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Web;
 using System.Web.Mvc;
 
@@ -18,7 +20,7 @@ namespace Web.Controllers
         private const string FIRST_ROW_INDEX_KEY = "firstRowIndex";
         private const string LAST_ROW_INDEX_KEY = "lastRowIndex";
         private const string COLUMN_INDEX_KEY = "columnIndex";
-        private const string FULL_RANGE_VALUES_KEY = "fullRangeValues";
+        //private const string FULL_RANGE_VALUES_KEY = "fullRangeValues";
         private const string VALUES_KEY = "values";
 
         // TODO config
@@ -70,43 +72,82 @@ namespace Web.Controllers
 
             // https://stackoverflow.com/questions/5855813/npoi-how-to-read-file-using-npoi
 
-            using (var excelApplication = new Application())
+            XSSFWorkbook xssfwb;
+            
+            using (FileStream file = new FileStream(fileName, FileMode.Open, FileAccess.Read))
             {
-                excelApplication.DisplayAlerts = false;
                 try
                 {
-                    var excelBook = excelApplication.Workbooks.Open(fileName);
-                    var sheet = excelBook.Sheets.FirstOrDefault() as Worksheet;
-                    var fullRange = sheet.UsedRange;
-                    int firstRowIndex = fullRange.Row;
-                    var firstColIndex = fullRange.Column;
-                    var fullRangeValues = (object[,])fullRange.Value;
-                    int lastRowIndex = fullRangeValues.GetLength(0);
-                    var lastColumnIndex = fullRangeValues.GetLength(1);
-
-                    //excelBook.Close(0);
-                    //app.Quit();
-
-                    _logger.Info($"Строки с {firstRowIndex} по {lastRowIndex}. Колонки с {firstColIndex} по {lastColumnIndex}");
-
-                    // Заполняем список колонок
-                    columns = new string[lastColumnIndex];
-                    for (int i = firstColIndex; i <= lastColumnIndex; i++)
-                        columns[i - firstColIndex] = fullRangeValues[firstRowIndex, i] as string;
-
-                    Session[FIRST_ROW_INDEX_KEY] = firstRowIndex;
-                    Session[LAST_ROW_INDEX_KEY] = lastRowIndex;
-                    Session[FULL_RANGE_VALUES_KEY] = fullRangeValues;
+                    xssfwb = new XSSFWorkbook(file);
                 }
                 catch (Exception ex)
                 {
                     _logger.Error(ex);
+                    throw;
                 }
-                finally
-                {
-                    excelApplication.Quit();
-                }
+                
             }
+
+            //ISheet sheet = hssfwb.GetSheet("Arkusz1");
+            ISheet sheet = xssfwb.GetSheetAt(0);
+            int firstRowIndex = sheet.FirstRowNum;
+            int lastRowIndex = sheet.LastRowNum;
+            //int firstColIndex = 1;
+            //int lastColumnIndex = 90;
+            var firstRow = sheet.GetRow(firstRowIndex);
+            columns = firstRow.Cells.Select(x => x.StringCellValue).ToArray();
+
+            //for (int row = 0; row <= sheet.LastRowNum; row++)
+            //{
+            //    if (sheet.GetRow(row) != null) //null is when the row only contains empty cells 
+            //    {
+            //        MessageBox.Show(string.Format("Row {0} = {1}", row, sheet.GetRow(row).GetCell(0).StringCellValue));
+            //    }
+            //}
+
+            _logger.Info($"Строки с {firstRowIndex} по {lastRowIndex}. Всего колонок {columns.Length}");
+
+            Session[FIRST_ROW_INDEX_KEY] = firstRowIndex;
+            Session[LAST_ROW_INDEX_KEY] = lastRowIndex;
+            //Session[FULL_RANGE_VALUES_KEY] = fullRangeValues;
+
+            //using (var excelApplication = new Application())
+            //{
+            //    excelApplication.DisplayAlerts = false;
+            //    try
+            //    {
+            //        var excelBook = excelApplication.Workbooks.Open(fileName);
+            //        var sheet = excelBook.Sheets.FirstOrDefault() as Worksheet;
+            //        var fullRange = sheet.UsedRange;
+            //        int firstRowIndex = fullRange.Row;
+            //        var firstColIndex = fullRange.Column;
+            //        var fullRangeValues = (object[,])fullRange.Value;
+            //        int lastRowIndex = fullRangeValues.GetLength(0);
+            //        var lastColumnIndex = fullRangeValues.GetLength(1);
+
+            //        //excelBook.Close(0);
+            //        //app.Quit();
+
+            //        _logger.Info($"Строки с {firstRowIndex} по {lastRowIndex}. Колонки с {firstColIndex} по {lastColumnIndex}");
+
+            //        // Заполняем список колонок
+            //        columns = new string[lastColumnIndex];
+            //        for (int i = firstColIndex; i <= lastColumnIndex; i++)
+            //            columns[i - firstColIndex] = fullRangeValues[firstRowIndex, i] as string;
+
+            //        Session[FIRST_ROW_INDEX_KEY] = firstRowIndex;
+            //        Session[LAST_ROW_INDEX_KEY] = lastRowIndex;
+            //        Session[FULL_RANGE_VALUES_KEY] = fullRangeValues;
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        _logger.Error(ex);
+            //    }
+            //    finally
+            //    {
+            //        excelApplication.Quit();
+            //    }
+            //}
 
             return columns;
         }
@@ -134,7 +175,7 @@ namespace Web.Controllers
             // Вычитываем все значения из выбранной колонки
             int firstRowIndex = (int)Session[FIRST_ROW_INDEX_KEY];
             int lastRowIndex = (int)Session[LAST_ROW_INDEX_KEY];
-            object[,] fullRangeValues = (object[,])Session[FULL_RANGE_VALUES_KEY];
+            object[,] fullRangeValues = null;// (object[,])Session[FULL_RANGE_VALUES_KEY];
             Session[COLUMN_INDEX_KEY] = columnIndex;
             
             string[] values = new string[lastRowIndex - firstRowIndex];
