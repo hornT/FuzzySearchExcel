@@ -5,23 +5,26 @@
 <input type="file" id="fileInput" onchange="fileChange(event)" class="input-file">
 <div id="dropZone" class="drop-zone" onclick="dropZoneOnClick()">Нажмите, или перетащите файл сюда</div>
 
-<div>
+<div style="margin-top: 10px">
     <div>Колонка</div>
-    <select id="column" class="column-selector"></select>
-    <button onclick="ProcessFile()">Обработка</button>
-    @*<button onclick="DownloadFile()">Сохранить</button>*@
-    <a href="~/Home/DownloadFile" target="_blank">Произвести замену и скачать файл</a>
+    <select id="column" class="column-selector form-control"></select>
+    <div class="btn-group">
+        <button type="button" class="btn btn-success" onclick="ProcessFile()">Обработка</button>
+        <a href="~/Home/DownloadFile" target="_blank" class="btn btn-success" role="button">Скачать</a>
+    </div>
 </div>
 
-<div>
+<div style="margin-top: 10px">
     <div>
         <span>Количество вариантов: </span>
-        <span id="variantsCount">0</span>
+        <span id="variantsCount" class="badge">0</span>
     </div>
-    <select id="variantsChoose" class="variants-choose" size="10"></select>
-    <button onclick="Next()">Пропустить</button>
-    <button onclick="Remove()">Исключить</button>
-    <button onclick="AddValue()">Добавить</button>
+    <select id="variantsChoose" class="variants-choose form-control" size="10"></select>
+    <div class="btn-group">
+        <button type="button" class="btn btn-primary" onclick="Next()">Пропустить</button>
+        <button type="button" class="btn btn-primary" onclick="Remove()">Исключить</button>
+        <button type="button" class="btn btn-primary" onclick="AddValue()">Добавить</button>
+    </div>
 </div>
 
 

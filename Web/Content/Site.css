@@ -29,7 +29,7 @@ body {
 input,
 select,
 textarea {
-    max-width: 280px;
+    /*max-width: 280px;*/
 }
 
 #dropZone.hover {
@@ -54,9 +54,15 @@ textarea {
     cursor: pointer;
     border: 2px dashed;
     height: 100px;
-    width: 80%;
-    margin: auto;
-    text-align: center; 
+    /*width: 80%;
+    margin: auto;*/
+    margin: 0 40px;
+    border-radius: 10px;
+    font-size: 1.5em;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 .column-selector{
     width: 500px;
