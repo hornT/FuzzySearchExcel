@@ -13,12 +13,7 @@ namespace Web.Controllers
 {
     public class HomeController : Controller
     {
-        private const string FILE_KEY = "excelFile";
-        private const string FILE_NAME_KEY = "excelFileName";
-        private const string FIRST_ROW_INDEX_KEY = "firstRowIndex";
-        private const string LAST_ROW_INDEX_KEY = "lastRowIndex";
-        private const string COLUMN_INDEX_KEY = "columnIndex";
-        private const string VALUES_KEY = "values";
+        private const string CACHE_KEY = "cache";
 
         // TODO config
         private const double fuzzyness = 0.7;
@@ -48,8 +43,9 @@ namespace Web.Controllers
             var fl = file.Split(',')[1];
             fileArr = Convert.FromBase64String(fl);
 
-            Session[FILE_KEY] = fileArr;
-            Session[FILE_NAME_KEY] = fileName;
+            SessionCache sc = GetSessionCache();
+            sc.File = fileArr;
+            sc.FileName = fileName;
 
             string[] columns = ReadExcelFile();
 
@@ -76,8 +72,9 @@ namespace Web.Controllers
             columns = firstRow.Cells.Select(x => x.StringCellValue).ToArray();
             _logger.Info($"Строки с {firstRowIndex} по {lastRowIndex}. Всего колонок {columns.Length}");
 
-            Session[FIRST_ROW_INDEX_KEY] = firstRowIndex;
-            Session[LAST_ROW_INDEX_KEY] = lastRowIndex;
+            SessionCache sc = GetSessionCache();
+            sc.FirstRowIndex = firstRowIndex;
+            sc.LastRowIndex = lastRowIndex;
 
             return columns;
         }
@@ -103,9 +100,10 @@ namespace Web.Controllers
         private PrepareResult PrepareAutoCorrection(int columnIndex, double fuzzyness, double autoCorrectionFuzzyness)
         {
             // Вычитываем все значения из выбранной колонки
-            int firstRowIndex = (int)Session[FIRST_ROW_INDEX_KEY];
-            int lastRowIndex = (int)Session[LAST_ROW_INDEX_KEY];
-            Session[COLUMN_INDEX_KEY] = columnIndex;
+            SessionCache sc = GetSessionCache();
+            int firstRowIndex = sc.FirstRowIndex;
+            int lastRowIndex = sc.LastRowIndex;
+            sc.ColumnIndex = columnIndex;
 
             XSSFWorkbook xssfwb = GetSSFWorkbook();
             ISheet sheet = xssfwb.GetSheetAt(0);
@@ -115,8 +113,7 @@ namespace Web.Controllers
             {
                 values[i - firstRowIndex - 1] = sheet.GetRow(i).GetCell(columnIndex).StringCellValue;
             }
-            
-            Session[VALUES_KEY] = values;
+            sc.Values = values;
             
             return _fuzzy.Prepare(values, fuzzyness, autoCorrectionFuzzyness);
         }
@@ -143,10 +140,11 @@ namespace Web.Controllers
         /// <returns></returns>
         public FileResult DownloadFile()
         {
-            int firstRowIndex = (int)Session[FIRST_ROW_INDEX_KEY];
-            int lastRowIndex = (int)Session[LAST_ROW_INDEX_KEY];
-            int columnIndex = (int)Session[COLUMN_INDEX_KEY];
-            string[] values = (string[])Session[VALUES_KEY];
+            SessionCache sc = GetSessionCache();
+            int firstRowIndex = sc.FirstRowIndex;
+            int lastRowIndex = sc.LastRowIndex;
+            int columnIndex = sc.ColumnIndex;
+            string[] values = sc.Values;
 
             _fuzzy.Replace(values);
 
@@ -169,14 +167,15 @@ namespace Web.Controllers
                 fileBytes = ms.ToArray();
             }
 
-            string originalFileName = (string)Session[FILE_NAME_KEY];
+            string originalFileName = sc.FileName;
 
             return File(fileBytes, System.Net.Mime.MediaTypeNames.Application.Octet, originalFileName);
         }
 
         private XSSFWorkbook GetSSFWorkbook()
         {
-            byte[] buff = (byte[])Session[FILE_KEY];
+            SessionCache sc = GetSessionCache();
+            byte[] buff = sc.File;
             using (MemoryStream ms = new MemoryStream(buff))
             {
                 try
@@ -190,5 +189,31 @@ namespace Web.Controllers
                 }
             }
         }
+        
+        private SessionCache GetSessionCache()
+        {
+            var cache = Session[CACHE_KEY] as SessionCache;
+            if(cache == null)
+            {
+                Session[CACHE_KEY] = cache = new SessionCache();
+            }
+
+            return cache;
+        }
+    }
+
+    internal sealed class SessionCache
+    {
+        public int FirstRowIndex { get; set; }
+
+        public int LastRowIndex { get; set; }
+
+        public int ColumnIndex { get; set; }
+
+        public string[] Values { get; set; }
+
+        public string FileName { get; set; }
+
+        public byte[] File { get; set; }
     }
 }
