@@ -106,6 +106,8 @@ namespace FuzzySearch
 
             for (int i = 0; i < values.Length; i++)
             {
+                if (values[i] == null)
+                    continue;
                 string replaceName;
                 if (CorrectionNames.TryGetValue(values[i], out replaceName))
                 {

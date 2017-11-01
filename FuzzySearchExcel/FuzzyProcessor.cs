@@ -96,7 +96,7 @@ namespace FuzzySearchExcel
         /// </summary>
         public void Save()
         {
-            if (_excelBook == null || _sheet == null || _fuzzy.Values == null)
+            if (_excelBook == null || _sheet == null)
                 return;
 
             // Записываем измененные значения в файл
@@ -104,7 +104,7 @@ namespace FuzzySearchExcel
             var lastCell = _sheet.Cells[_lastRowIndex, _columnIndex];
             var columnRange = _sheet.Range(firstCell, lastCell);
 
-            columnRange.Value = _fuzzy.Values;
+            //columnRange.Value = _fuzzy.Values;
 
             _excelBook.Save();
         }

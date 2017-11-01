@@ -14,6 +14,7 @@ namespace Web.Controllers
     public class HomeController : Controller
     {
         private const string FILE_KEY = "excelFile";
+        private const string FILE_NAME_KEY = "excelFileName";
         private const string FIRST_ROW_INDEX_KEY = "firstRowIndex";
         private const string LAST_ROW_INDEX_KEY = "lastRowIndex";
         private const string COLUMN_INDEX_KEY = "columnIndex";
@@ -39,7 +40,7 @@ namespace Web.Controllers
         }
 
         [HttpPost]
-        public ActionResult UploadFile(string file)
+        public ActionResult UploadFile(string file, string fileName)
         {
             byte[] fileArr = new byte[0];
             if (string.IsNullOrEmpty(file) == true)
@@ -52,6 +53,7 @@ namespace Web.Controllers
             System.IO.File.WriteAllBytes(tempPath, fileArr);
 
             Session[FILE_KEY] = tempPath;
+            Session[FILE_NAME_KEY] = fileName;
 
             string[] columns = ReadExcelFile(tempPath);
 
@@ -173,22 +175,30 @@ namespace Web.Controllers
                 IgnoreRemoteRequests = true
             };
 
+            int firstRowIndex = (int)Session[FIRST_ROW_INDEX_KEY];
+            int lastRowIndex = (int)Session[LAST_ROW_INDEX_KEY];
+            int columnIndex = (int)Session[COLUMN_INDEX_KEY];
+            string[] values = (string[])Session[VALUES_KEY];
+
+            _fuzzy.Replace(values);
+
+            var valuesArr = new object[values.Length, 1];
+            for (int i = 0; i < values.Length; i++)
+                valuesArr[i, 0] = values[i];
+
             try
             {
                 var excelBook = app.Workbooks.Open(fileName);
                 var sheet = excelBook.Sheets.FirstOrDefault() as Worksheet;
 
-                var fullRange = sheet.UsedRange;
-                int firstRowIndex = fullRange.Row;
-                var firstColIndex = fullRange.Column;
-                var fullRangeValues = (object[,])fullRange.Value;
-                int lastRowIndex = fullRangeValues.GetLength(0);
-                var lastColumnIndex = fullRangeValues.GetLength(1);
+                var firstCell = sheet.Cells[firstRowIndex + 1, columnIndex];
+                var lastCell = sheet.Cells[lastRowIndex, columnIndex];
+                var range = sheet.Range(firstCell, lastCell);
+                range.Value = valuesArr;
 
+                excelBook.Save();
                 excelBook.Close(0);
                 app.Quit();
-
-                _logger.Info($"Строки с {firstRowIndex} по {lastRowIndex}. Колонки с {firstColIndex} по {lastColumnIndex}");
             }
             catch (Exception ex)
             {
@@ -197,7 +207,9 @@ namespace Web.Controllers
             }
 
             byte[] fileBytes = System.IO.File.ReadAllBytes(fileName);
-            return File(fileBytes, System.Net.Mime.MediaTypeNames.Application.Octet, Path.GetFileName(fileName));
+            string originalFileName = (string)Session[FILE_NAME_KEY];
+
+            return File(fileBytes, System.Net.Mime.MediaTypeNames.Application.Octet, originalFileName);
         }
     }
 }

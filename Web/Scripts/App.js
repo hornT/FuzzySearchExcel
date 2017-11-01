@@ -2,6 +2,9 @@
 
 const logElement = document.querySelector('#log');
 
+var variantIndex = 0;
+var possibleReplaces;
+
 $(document).ready(function () {
     var dropZone = $('#dropZone');
 
@@ -27,7 +30,10 @@ $(document).ready(function () {
 
         const file = event.dataTransfer.files[0];
         const reader = new FileReader();
-        reader.onload = onFileLoad;
+        //reader.onload = onFileLoad;
+        reader.onload = function (e) {
+            onFileLoad(e, file.name);
+        };
         reader.readAsDataURL(file);
     };
 });
@@ -41,7 +47,9 @@ function fileChange(e) {
     var reader = new FileReader();
     var files = e.dataTransfer ? e.dataTransfer.files : e.target.files;
 
-    reader.onload = onFileLoad;
+    reader.onload = function (e) {
+        onFileLoad(e, files[0].name);
+    };
     reader.readAsDataURL(files[0]);
 }
 
@@ -49,13 +57,13 @@ function fileChange(e) {
  * Загрузка файла
  * @param {any} e
  */
-function onFileLoad(e) {
+function onFileLoad(e, fileName) {
     const data = e.target.result;
 
     $.ajax({
         type: "POST",
         url: "/Home/UploadFile",
-        data: { file: data },
+        data: { file: data, fileName: fileName },
         success: function (res) {
             AddLog(res.message);
             if (res.columns)
@@ -86,7 +94,7 @@ function InitColumns(columns) {
 }
 
 /**
- * 
+ * Обработать файл
  */
 function ProcessFile() {
     const columnIndex = document.querySelector('#column').selectedIndex;
@@ -103,7 +111,7 @@ function ProcessFile() {
             AddLog(res.message);
             if (res.prepareResult) {
                 ShowVariants(res.prepareResult);
-                AddReplaceLog(res.ReplacementLog)
+                AddReplaceLog(res.prepareResult.ReplacementLog)
             }
         },
         error: function (q, w, e, r) {
@@ -113,11 +121,8 @@ function ProcessFile() {
     });
 }
 
-var variantIndex = 0;
-var possibleReplaces;
-
 /**
- * 
+ * Отобразить варианты замены
  * @param {any} prepareResult
  */
 function ShowVariants(prepareResult) {
@@ -130,7 +135,7 @@ function ShowVariants(prepareResult) {
 }
 
 /**
- * 
+ * Отобразить лог замены
  * @param {any} replacedValues
  */
 function AddReplaceLog(replacedValues) {
@@ -195,7 +200,6 @@ function AddValue() {
         return;
     }
 
-    //const values = $("#variantsChoose option").map((v, i) => i.value);
     const options = $('#variantsChoose option');
     const values = $.map(options, v => v.value);
     const selectedValue = variantsChoose.selectedOptions[0].value;
@@ -215,7 +219,6 @@ function AddValue() {
 
     Next();
 }
-
 
 /**
  * Добавление лога
