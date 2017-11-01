@@ -66,46 +66,49 @@ namespace Web.Controllers
         /// <param name="fileName"></param>
         private string[] ReadExcelFile(string fileName)
         {
-            var app = new Application
+            string[] columns = new string[0];
+
+            // https://stackoverflow.com/questions/5855813/npoi-how-to-read-file-using-npoi
+
+            using (var excelApplication = new Application())
             {
-                DisplayAlerts = false,
-                ScreenUpdating = false,
-                IgnoreRemoteRequests = true
-            };
+                excelApplication.DisplayAlerts = false;
+                try
+                {
+                    var excelBook = excelApplication.Workbooks.Open(fileName);
+                    var sheet = excelBook.Sheets.FirstOrDefault() as Worksheet;
+                    var fullRange = sheet.UsedRange;
+                    int firstRowIndex = fullRange.Row;
+                    var firstColIndex = fullRange.Column;
+                    var fullRangeValues = (object[,])fullRange.Value;
+                    int lastRowIndex = fullRangeValues.GetLength(0);
+                    var lastColumnIndex = fullRangeValues.GetLength(1);
 
-            string[] columns;
-            try
-            {
-                var excelBook = app.Workbooks.Open(fileName);
-                var sheet = excelBook.Sheets.FirstOrDefault() as Worksheet;
-                var fullRange = sheet.UsedRange;
-                int firstRowIndex = fullRange.Row;
-                var firstColIndex = fullRange.Column;
-                var fullRangeValues = (object[,])fullRange.Value;
-                int lastRowIndex = fullRangeValues.GetLength(0);
-                var lastColumnIndex = fullRangeValues.GetLength(1);
-                
-                excelBook.Close(0);
-                app.Quit();
+                    //excelBook.Close(0);
+                    //app.Quit();
 
-                _logger.Info($"Строки с {firstRowIndex} по {lastRowIndex}. Колонки с {firstColIndex} по {lastColumnIndex}");
+                    _logger.Info($"Строки с {firstRowIndex} по {lastRowIndex}. Колонки с {firstColIndex} по {lastColumnIndex}");
 
-                // Заполняем список колонок
-                columns = new string[lastColumnIndex];
-                for (int i = firstColIndex; i <= lastColumnIndex; i++)
-                    columns[i - firstColIndex] = fullRangeValues[firstRowIndex, i] as string;
+                    // Заполняем список колонок
+                    columns = new string[lastColumnIndex];
+                    for (int i = firstColIndex; i <= lastColumnIndex; i++)
+                        columns[i - firstColIndex] = fullRangeValues[firstRowIndex, i] as string;
 
-                Session[FIRST_ROW_INDEX_KEY] = firstRowIndex;
-                Session[LAST_ROW_INDEX_KEY] = lastRowIndex;
-                Session[FULL_RANGE_VALUES_KEY] = fullRangeValues;
-
-                return columns;
+                    Session[FIRST_ROW_INDEX_KEY] = firstRowIndex;
+                    Session[LAST_ROW_INDEX_KEY] = lastRowIndex;
+                    Session[FULL_RANGE_VALUES_KEY] = fullRangeValues;
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error(ex);
+                }
+                finally
+                {
+                    excelApplication.Quit();
+                }
             }
-            catch (Exception ex)
-            {
-                _logger.Error(ex);
-                throw;
-            }
+
+            return columns;
         }
 
         /// <summary>
@@ -167,14 +170,6 @@ namespace Web.Controllers
         public FileResult DownloadFile()
         {
             string fileName = (string)Session[FILE_KEY];
-
-            var app = new Application
-            {
-                DisplayAlerts = false,
-                ScreenUpdating = false,
-                IgnoreRemoteRequests = true
-            };
-
             int firstRowIndex = (int)Session[FIRST_ROW_INDEX_KEY];
             int lastRowIndex = (int)Session[LAST_ROW_INDEX_KEY];
             int columnIndex = (int)Session[COLUMN_INDEX_KEY];
@@ -186,24 +181,29 @@ namespace Web.Controllers
             for (int i = 0; i < values.Length; i++)
                 valuesArr[i, 0] = values[i];
 
-            try
+            using (var excelApplication = new Application())
             {
-                var excelBook = app.Workbooks.Open(fileName);
-                var sheet = excelBook.Sheets.FirstOrDefault() as Worksheet;
+                excelApplication.DisplayAlerts = false;
+                try
+                {
+                    var excelBook = excelApplication.Workbooks.Open(fileName);
+                    var sheet = excelBook.Sheets.FirstOrDefault() as Worksheet;
 
-                var firstCell = sheet.Cells[firstRowIndex + 1, columnIndex];
-                var lastCell = sheet.Cells[lastRowIndex, columnIndex];
-                var range = sheet.Range(firstCell, lastCell);
-                range.Value = valuesArr;
+                    var firstCell = sheet.Cells[firstRowIndex + 1, columnIndex];
+                    var lastCell = sheet.Cells[lastRowIndex, columnIndex];
+                    var range = sheet.Range(firstCell, lastCell);
+                    range.Value = valuesArr;
 
-                excelBook.Save();
-                excelBook.Close(0);
-                app.Quit();
-            }
-            catch (Exception ex)
-            {
-                _logger.Error(ex);
-                throw;
+                    excelBook.Save();
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error(ex);
+                }
+                finally
+                {
+                    excelApplication.Quit();
+                }
             }
 
             byte[] fileBytes = System.IO.File.ReadAllBytes(fileName);
