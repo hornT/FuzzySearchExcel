@@ -70,12 +70,14 @@ textarea {
 .variants-choose {
     width: 500px;
 }
-.log {
-    height: 200px;
-    border: 1px solid;
-    bottom: 10px;
+.footer-log {
     position: absolute;
     right: 15px;
     left: 15px;
+    bottom: 10px;
+}
+.log {
+    height: 200px;
+    border: 1px solid;
     overflow-y: scroll;
 }
