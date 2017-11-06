@@ -2,28 +2,44 @@
 
 namespace FuzzySearch
 {
-    public class PrepareResult
+    public sealed class PrepareResult
     {
         /// <summary>
         /// Возможные варианты замен
         /// </summary>
-        public readonly List<string[]> PossibleReplaces;
+        public readonly PossibleReplace[] PossibleReplaces;
 
         /// <summary>
         /// Лог с результатом замены
         /// </summary>
-        public readonly HashSet<string> ReplacementLog;
+        public readonly List<string> ReplacementLog;
 
-        /// <summary>
-        /// Лог с результатом автопоиска замен
-        /// </summary>
-        public Dictionary<string, string> AutoCorrectionResult;
+        ///// <summary>
+        ///// Лог с результатом автопоиска замен
+        ///// </summary>
+        //public Dictionary<string, string> AutoCorrectionResult;
 
-        public PrepareResult(List<string[]> possibleReplaces, HashSet<string> replacementLog, Dictionary<string, string> autoCorrectionResult)
+        public readonly string[] BaseNames;
+
+        public PrepareResult(PossibleReplace[] possibleReplaces, List<string> replacementLog, string[] baseNames)
         {
             PossibleReplaces = possibleReplaces;
             ReplacementLog = replacementLog;
-            AutoCorrectionResult = autoCorrectionResult;
+            //AutoCorrectionResult = autoCorrectionResult;
+            BaseNames = baseNames;
+        }
+    }
+
+    public sealed class PossibleReplace
+    {
+        public readonly string[] Values;
+
+        public readonly string BaseName;
+
+        public PossibleReplace(string[] values, string baseName)
+        {
+            Values = values;
+            BaseName = baseName;
         }
     }
 }

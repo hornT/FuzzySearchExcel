@@ -15,20 +15,51 @@
 </div>
 
 <div style="margin-top: 10px">
-    <div>
-        <span>Количество вариантов: </span>
-        <span id="variantsCount" class="badge">0</span>
-    </div>
-    <select id="variantsChoose" class="variants-choose form-control" size="10"></select>
-    <div class="btn-group">
-        <button type="button" class="btn btn-primary" onclick="Next()">Пропустить</button>
-        <button type="button" class="btn btn-primary" onclick="Remove()">Исключить</button>
-        <button type="button" class="btn btn-primary" onclick="AddValue()">Добавить</button>
-    </div>
+    <table>
+        <tr style="text-align: center">
+            <td style="width: 500px">
+                <h4>Корректировка наименования</h4>
+            </td>   
+            <td style="width: 300px;">
+                <h4>Базовое наименование</h4>
+            </td>
+        </tr>
+
+        <tr>
+            <td style="width: 500px; text-align: center;">
+                <span>Варианты наименований </span>
+                <span id="variantsCount" class="badge">0</span>
+            </td>
+            <td style="width: 300px;">
+                <input id="baseNameInp" list="possibleBaseNames" type="search" placeholder="Введите базовое название" style="width: 100%"/>
+                <datalist id="possibleBaseNames"></datalist>
+            </td>
+        </tr>
+
+        <tr>
+            <td style="width: 500px">
+                <select id="variantsChoose" class="variants-choose form-control" style="display: inline-block" size="10" onclick="VariantClick(event)"></select>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-primary" onclick="Next()">Пропустить</button>
+                    <button type="button" class="btn btn-primary" onclick="Remove()">Исключить</button>
+                    <button type="button" class="btn btn-primary" onclick="AddValue()">Добавить</button>
+                </div>
+            </td>
+            <td style="width: 300px; vertical-align: top; padding: 10px;">
+                <div>Ранее базовым считалось:</div>
+                <div style="margin: 10px 0; height: 20px"><a href="#" id="baseNameLnk" onclick="BaseNameClick(event)"></a></div>
+                <div>Кликните на подходящее наименование, чтобы обозначить его за базовое. Либо выберите его из списка слева и нажмите кнопку «Добавить»</div>
+            </td>
+        </tr>
+        
+    </table>
 </div>
 
+<div>
+    <span>Описание процесса</span>
+    <div id="log" class="log"></div>
+</div>
 
-<div id="log" class="log"></div>    
 
 @section scripts
     {

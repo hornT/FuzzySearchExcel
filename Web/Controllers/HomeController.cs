@@ -17,7 +17,7 @@ namespace Web.Controllers
 
         // TODO config
         private const double fuzzyness = 0.7;
-        private const double autoFuzzyness = 0.9;
+        //private const double autoFuzzyness = 0.9;
 
         private readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly Fuzzy _fuzzy;
@@ -86,7 +86,7 @@ namespace Web.Controllers
         /// <returns></returns>
         public ActionResult ProcessFile(int columnIndex)
         {
-            PrepareResult prepareResult = PrepareAutoCorrection(columnIndex, fuzzyness, autoFuzzyness);
+            PrepareResult prepareResult = PrepareAutoCorrection(columnIndex, fuzzyness);
             if (prepareResult == null)
                 return Json(new { message = "Не удалось обработать файл"});
 
@@ -97,7 +97,7 @@ namespace Web.Controllers
         /// Выполнить автокоррекцию
         /// </summary>
         /// <param name="columnIndex"></param>
-        private PrepareResult PrepareAutoCorrection(int columnIndex, double fuzzyness, double autoCorrectionFuzzyness)
+        private PrepareResult PrepareAutoCorrection(int columnIndex, double fuzzyness)
         {
             // Вычитываем все значения из выбранной колонки
             SessionCache sc = GetSessionCache();
@@ -115,7 +115,7 @@ namespace Web.Controllers
             }
             sc.Values = values;
             
-            return _fuzzy.Prepare(values, fuzzyness, autoCorrectionFuzzyness);
+            return _fuzzy.Prepare(values, fuzzyness);
         }
 
         /// <summary>

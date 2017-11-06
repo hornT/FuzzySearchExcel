@@ -18,11 +18,6 @@ namespace FuzzySearch
         private readonly object _correctionsLock = new object();
         private readonly string _fileName;
 
-        ///// <summary>
-        ///// Значения для замены
-        ///// </summary>
-        //public string[] Values { get; private set; }
-
         /// <summary>
         /// Словарь для автозамен
         /// </summary>
@@ -58,43 +53,24 @@ namespace FuzzySearch
         /// <param name=""></param>
         /// <param name="fuzzyness"></param>
         /// <returns></returns>
-        public PrepareResult Prepare(IEnumerable<string> values, double fuzzyness, double autoCorrectionFuzzyness)
+        public PrepareResult Prepare(IEnumerable<string> values, double fuzzyness)
         {
-            var valuesArr = values.ToArray();
+            string[] valuesArr = values.ToArray();
 
             // Прямая замена
-            HashSet<string> replacementLog = Replace(valuesArr);
-
-            // Замена очень похожих слов
-            Dictionary<string, string> autoCorrectionResult = AutoCorrection(autoCorrectionFuzzyness, valuesArr);
-            if(autoCorrectionResult.Count > 0)
-                Replace(valuesArr);
-
-            // Ищем похожие слова
-            HashSet<string> allNames = new HashSet<string>(valuesArr);
-            _logger.Info($"Осталось {allNames.Count} уникальных названий");
-
-            HashSet<int> passIndexes = new HashSet<int>();
-            string[] allNamesArr = allNames.ToArray();
-            List<string[]> possibleReplaces = new List<string[]>();
-
-            for (int i = 0; i < allNamesArr.Length; i++)
+            HashSet<string> replacements = Replace(valuesArr);
+            List<string> replacementLog = replacements.Select(x =>
             {
-                // Пропускаем уже задействованные слова
-                if (passIndexes.Contains(i))
-                    continue;
+                string baseName;
+                CorrectionNames.TryGetValue(x, out baseName);
 
-                string[] sameNames = Search(allNamesArr[i], allNamesArr, fuzzyness);
-                if (sameNames.Length > 1)
-                {
-                    possibleReplaces.Add(sameNames);
+                return $"Компания {x} заменена на {baseName}";
+            }).ToList();
 
-                    foreach (string name in sameNames)
-                        passIndexes.Add(Array.IndexOf(allNamesArr, name));
-                }
-            }
+            // Поиск названий, похожих на базовые
+            PossibleReplace[] possibleReplaces = AutoCorrection(fuzzyness, valuesArr);
 
-            return new PrepareResult(possibleReplaces, replacementLog, autoCorrectionResult);
+            return new PrepareResult(possibleReplaces, replacementLog, CorrectionNames.Values.ToArray());
         }
 
         /// <summary>
@@ -124,32 +100,50 @@ namespace FuzzySearch
         /// </summary>
         /// <param name="fuzzyness"></param>
         /// <returns></returns>
-        private Dictionary<string, string> AutoCorrection(double fuzzyness, string[] values)
+        private PossibleReplace[] AutoCorrection(double fuzzyness, string[] values)
         {
-            Dictionary<string, string> result = new Dictionary<string, string>();
+            List<PossibleReplace> replaces = new List<PossibleReplace>();
 
             HashSet<string> allNames = new HashSet<string>(values);
             string[] keyWords = CorrectionNames.Values.ToArray();
 
-            foreach(string keyWord in keyWords)
+            // Исключаем из выборки базовые названия
+            Array.ForEach(keyWords, x => allNames.Remove(x));
+
+            // Поиск похожих названий на базовые
+            foreach (string keyWord in keyWords)
             {
                 string[] sameNames = Search(keyWord, allNames, fuzzyness);
 
                 if (sameNames.Length > 0)
                 {
-                    string replaceWords = string.Join("; ", sameNames);
-                    result[replaceWords] = keyWord;
+                    replaces.Add(new PossibleReplace(sameNames, keyWord));
+                    Array.ForEach(sameNames, x => allNames.Remove(x));
+                }
+            }
+            _logger.Info($"Найдено {replaces.Count} похожих на базовые названия компаний");
 
-                    //// Добавляем новые значения в словарь для дальнейшей замены
-                    //lock (_correctionsLock)
-                    //{
-                    //    foreach (string sameName in sameNames)
-                    //        CorrectionNames[sameName] = keyWord;
-                    //}
+            // Поиск похожих названий между собой
+            HashSet<int> passIndexes = new HashSet<int>();
+            string[] allNamesArr = allNames.ToArray();
+            
+            for (int i = 0; i < allNamesArr.Length; i++)
+            {
+                // Пропускаем уже задействованные слова
+                if (passIndexes.Contains(i))
+                    continue;
+
+                string[] sameNames = Search(allNamesArr[i], allNamesArr, fuzzyness);
+                if (sameNames.Length > 1)
+                {
+                    replaces.Add(new PossibleReplace(sameNames, null));
+
+                    foreach (string name in sameNames)
+                        passIndexes.Add(Array.IndexOf(allNamesArr, name));
                 }
             }
 
-            return result;
+            return replaces.ToArray();
         }
 
         /// <summary>
@@ -175,7 +169,6 @@ namespace FuzzySearch
                 .ToArray();
 
             return result;
-            //return Levenshtein.Search(value, wordList, fuzzyness);
         }
 
         /// <summary>

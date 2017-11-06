@@ -1,9 +1,16 @@
 ﻿'use strict';
 
 const logElement = document.querySelector('#log');
+const baseNameInp = document.querySelector('#baseNameInp');
+const baseNameLnk = document.querySelector('#baseNameLnk');
+const variantsChoose = document.querySelector('#variantsChoose');
+const variantsCount = document.querySelector('#variantsCount');
+const columnSelect = document.querySelector('#column');
+const possibleBaseNamesData = document.querySelector('#possibleBaseNames');
 
 var variantIndex = 0;
 var possibleReplaces;
+var baseNames;
 
 $(document).ready(function () {
     var dropZone = $('#dropZone');
@@ -81,7 +88,7 @@ function onFileLoad(e, fileName) {
  * @param {any} columns
  */
 function InitColumns(columns) {
-    const columnSelect = document.querySelector('#column');
+    
     columnSelect.innerHTML = '';
 
     columns.forEach((elem, ind) => {
@@ -94,10 +101,10 @@ function InitColumns(columns) {
 }
 
 /**
- * Обработать файл
+ * Обработать файл и получить предварительный результат замен
  */
 function ProcessFile() {
-    const columnIndex = document.querySelector('#column').selectedIndex;
+    const columnIndex = columnSelect.selectedIndex;
     if (columnIndex < 0) {
         AddLog('Не выбрана колонка'); // TODO error
         return;
@@ -111,7 +118,7 @@ function ProcessFile() {
             AddLog(res.message);
             if (res.prepareResult) {
                 ShowVariants(res.prepareResult);
-                AddReplaceLog(res.prepareResult.ReplacementLog)
+                
             }
         },
         error: function (q, w, e, r) {
@@ -128,10 +135,22 @@ function ProcessFile() {
 function ShowVariants(prepareResult) {
 
     possibleReplaces = prepareResult.PossibleReplaces;
+    baseNames = prepareResult.BaseNames;
 
-    variantIndex = possibleReplaces.length - 1;
+    variantIndex = 0;
 
     Next();
+
+    AddReplaceLog(prepareResult.ReplacementLog);
+
+    // Запомнить базовые названия
+    possibleBaseNamesData.innerHTML = '';
+    baseNames.forEach((elem, ind) => {
+        const option = document.createElement('option');
+        option.innerHTML = elem;
+
+        possibleBaseNamesData.appendChild(option);
+    });
 }
 
 /**
@@ -149,36 +168,47 @@ function AddReplaceLog(replacedValues) {
 }
 
 /**
- * 
- */
-function DownloadFile() {
-
-}
-
-/**
  * Выбор следующего набора возможных вариантов
  */
 function Next() {
 
-    const variantsChoose = document.querySelector('#variantsChoose');
     variantsChoose.innerHTML = '';
+    baseNameInp.value = '';
 
-    if (variantIndex < 0) {
+    if (variantIndex >= possibleReplaces.length)
         return;
-    }
 
-    const variantsCount = document.querySelector('#variantsCount');
-    variantsCount.innerHTML = variantIndex + 1;
+    variantsCount.innerHTML = possibleReplaces.length - variantIndex;
 
-    const variants = possibleReplaces[variantIndex--];
+    const variants = possibleReplaces[variantIndex++];
 
-    variants.forEach((elem, ind) => {
+    baseNameLnk.innerHTML = variants.BaseName;
+
+    variants.Values.forEach((elem, ind) => {
         const option = document.createElement('option');
         option.innerHTML = elem;
         option.value = elem;
 
         variantsChoose.appendChild(option);
     });
+}
+
+/**
+ * Клик по базовому наименованию
+ * @param {any} event
+ */
+function BaseNameClick(event) {
+
+    baseNameInp.value = baseNameLnk.text;
+}
+
+/**
+ * Клик по одному из предложенных вариантов
+ * @param {any} event
+ */
+function VariantClick(event) {
+
+    baseNameInp.value = variantsChoose.selectedOptions[0].value;
 }
 
 /**
@@ -189,20 +219,20 @@ function Remove() {
     $("#variantsChoose option:selected").remove();
 }
 
-
 /**
  * Добавить названия компаний в базу
  */
 function AddValue() {
-    const variantsChoose = document.querySelector('#variantsChoose');
-    if (variantsChoose.selectedIndex < 0) {
+
+    const selectedValue = baseNameInp.value;
+
+    if (!selectedValue) {
         AddLog('Не выбран вариант'); // TODO error
         return;
     }
 
     const options = $('#variantsChoose option');
     const values = $.map(options, v => v.value);
-    const selectedValue = variantsChoose.selectedOptions[0].value;
 
     $.ajax({
         type: "POST",
