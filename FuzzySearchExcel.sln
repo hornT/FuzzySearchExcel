@@ -1,10 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27004.2005
+VisualStudioVersion = 15.0.27004.2006
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FuzzySearchExcel", "FuzzySearchExcel\FuzzySearchExcel.csproj", "{4334A8BA-2710-4A99-90A6-431B0AA4F711}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FuzzySearch", "FuzzySearch\FuzzySearch.csproj", "{5A50B181-89FF-4221-8B75-6BBD2ABBE92D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FuzzyUnitTest", "FuzzyUnitTest\FuzzyUnitTest.csproj", "{BDFB4276-7347-47F9-8462-DECF1F51038B}"
@@ -17,10 +15,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{4334A8BA-2710-4A99-90A6-431B0AA4F711}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4334A8BA-2710-4A99-90A6-431B0AA4F711}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4334A8BA-2710-4A99-90A6-431B0AA4F711}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4334A8BA-2710-4A99-90A6-431B0AA4F711}.Release|Any CPU.Build.0 = Release|Any CPU
 		{5A50B181-89FF-4221-8B75-6BBD2ABBE92D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{5A50B181-89FF-4221-8B75-6BBD2ABBE92D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5A50B181-89FF-4221-8B75-6BBD2ABBE92D}.Release|Any CPU.ActiveCfg = Release|Any CPU
