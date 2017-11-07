@@ -7,6 +7,7 @@ const variantsChoose = document.querySelector('#variantsChoose');
 const variantsCount = document.querySelector('#variantsCount');
 const columnSelect = document.querySelector('#column');
 const possibleBaseNamesData = document.querySelector('#possibleBaseNames');
+const overlap = $('.overlap');
 
 var variantIndex = 0;
 var possibleReplaces;
@@ -67,6 +68,8 @@ function fileChange(e) {
 function onFileLoad(e, fileName) {
     const data = e.target.result;
 
+    overlap.show();
+
     $.ajax({
         type: "POST",
         url: "/Home/UploadFile",
@@ -79,6 +82,9 @@ function onFileLoad(e, fileName) {
         error: function (q, w, e, r) {
             console.log('error');
             AddLog('Произошла ошика. Подробности в консоли');
+        },
+        complete: function () {
+            overlap.hide();
         }
     });
 }
@@ -110,6 +116,8 @@ function ProcessFile() {
         return;
     }
 
+    overlap.show();
+
     $.ajax({
         type: "POST",
         url: "/Home/ProcessFile",
@@ -124,6 +132,9 @@ function ProcessFile() {
         error: function (q, w, e, r) {
             console.log('error');
             AddLog('Произошла ошика. Подробности в консоли'); // TODO error
+        },
+        complete: function () {
+            overlap.hide();
         }
     });
 }
@@ -234,6 +245,8 @@ function AddValue() {
     const options = $('#variantsChoose option');
     const values = $.map(options, v => v.value);
 
+    overlap.show();
+
     $.ajax({
         type: "POST",
         url: "/Home/AddCompany",
@@ -244,6 +257,9 @@ function AddValue() {
         error: function (q, w, e, r) {
             console.log('error');
             AddLog('Произошла ошика. Подробности в консоли'); // TODO error
+        },
+        complete: function () {
+            overlap.hide();
         }
     });
 

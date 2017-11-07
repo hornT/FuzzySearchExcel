@@ -115,7 +115,7 @@ namespace Web.Controllers
             string[] values = new string[lastRowIndex - firstRowIndex];
             for (int i = firstRowIndex + 1; i <= lastRowIndex; i++)
             {
-                values[i - firstRowIndex - 1] = sheet.GetRow(i).GetCell(columnIndex).StringCellValue;
+                values[i - firstRowIndex - 1] = sheet.GetRow(i).GetCell(columnIndex).ToString();
             }
             sc.Values = values;
             
