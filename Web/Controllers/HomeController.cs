@@ -4,6 +4,7 @@ using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Web;
@@ -14,17 +15,20 @@ namespace Web.Controllers
     public class HomeController : Controller
     {
         private const string CACHE_KEY = "cache";
-
-        // TODO config
-        private const double fuzzyness = 0.7;
-        //private const double autoFuzzyness = 0.9;
+        private const double DEFAULT_FUZZYNESS = 0.7;
 
         private readonly Logger _logger = LogManager.GetCurrentClassLogger();
+        private readonly double _fuzzyness;
         private readonly Fuzzy _fuzzy;
 
         public HomeController()
         {
             string fileName = Path.Combine(HttpRuntime.AppDomainAppPath, "App_Data", Fuzzy.FILE_NAME);
+            string fuzzyValue = System.Configuration.ConfigurationManager.AppSettings["fuzzyness"].ToString();
+            if (string.IsNullOrEmpty(fuzzyValue) == true ||
+                double.TryParse(fuzzyValue, NumberStyles.Any, NumberFormatInfo.InvariantInfo, out _fuzzyness) == false)
+                _fuzzyness = DEFAULT_FUZZYNESS;
+
             _fuzzy = new Fuzzy(fileName);
         }
 
@@ -86,7 +90,7 @@ namespace Web.Controllers
         /// <returns></returns>
         public ActionResult ProcessFile(int columnIndex)
         {
-            PrepareResult prepareResult = PrepareAutoCorrection(columnIndex, fuzzyness);
+            PrepareResult prepareResult = PrepareAutoCorrection(columnIndex, _fuzzyness);
             if (prepareResult == null)
                 return Json(new { message = "Не удалось обработать файл"});
 

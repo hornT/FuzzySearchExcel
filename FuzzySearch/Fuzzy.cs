@@ -10,7 +10,7 @@ namespace FuzzySearch
     /// <summary>
     /// Автозамена
     /// </summary>
-    public class Fuzzy
+    public sealed class Fuzzy
     {
         public const string FILE_NAME = "corrections.xml";
 
