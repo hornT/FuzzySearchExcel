@@ -19,17 +19,36 @@ namespace Web.Controllers
 
         private readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly double _fuzzyness;
-        private readonly Fuzzy _fuzzy;
+
+        private static readonly object _sync = new object();
+
+        private static Fuzzy _fuzzy;
+        private static Fuzzy Fuzzy
+        {
+            get
+            {
+                if(_fuzzy == null || _fuzzy.IsReady == false)
+                {
+                    lock(_sync)
+                    {
+                        if (_fuzzy == null)
+                        {
+                            string fileName = Path.Combine(HttpRuntime.AppDomainAppPath, "App_Data", Fuzzy.FILE_NAME);
+                            _fuzzy = new Fuzzy(fileName);
+                        }
+                    }
+                }
+
+                return _fuzzy;
+            }
+        }
 
         public HomeController()
         {
-            string fileName = Path.Combine(HttpRuntime.AppDomainAppPath, "App_Data", Fuzzy.FILE_NAME);
             string fuzzyValue = System.Configuration.ConfigurationManager.AppSettings["fuzzyness"].ToString();
             if (string.IsNullOrEmpty(fuzzyValue) == true ||
                 double.TryParse(fuzzyValue, NumberStyles.Any, NumberFormatInfo.InvariantInfo, out _fuzzyness) == false)
                 _fuzzyness = DEFAULT_FUZZYNESS;
-
-            _fuzzy = new Fuzzy(fileName);
         }
 
         public ActionResult Index()
@@ -119,7 +138,7 @@ namespace Web.Controllers
             }
             sc.Values = values;
             
-            return _fuzzy.Prepare(values, fuzzyness);
+            return Fuzzy.Prepare(values, fuzzyness);
         }
 
         /// <summary>
@@ -135,7 +154,7 @@ namespace Web.Controllers
             var replaceWords = new HashSet<string>(values);
             replaceWords.Remove(keyWord);
 
-            _fuzzy.Add(keyWord, replaceWords);
+            Fuzzy.Add(keyWord, replaceWords);
         }
 
         /// <summary>
@@ -150,7 +169,7 @@ namespace Web.Controllers
             int columnIndex = sc.ColumnIndex;
             string[] values = sc.Values;
 
-            _fuzzy.Replace(values);
+            Fuzzy.Replace(values);
 
             var valuesArr = new object[values.Length, 1];
             for (int i = 0; i < values.Length; i++)

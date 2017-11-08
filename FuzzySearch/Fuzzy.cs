@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Timers;
 
 namespace FuzzySearch
 {
@@ -12,16 +13,25 @@ namespace FuzzySearch
     /// </summary>
     public sealed class Fuzzy
     {
+        /// <summary>
+        /// Время до отложенного сохранения автозамен
+        /// </summary>
+        //private const int SAVE_DELAY = 5 * 60 * 1000; // 5 минут в миллисекундах
+        private const int SAVE_DELAY = 10 * 1000;
+
         public const string FILE_NAME = "corrections.xml";
 
         private readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly object _correctionsLock = new object();
         private readonly string _fileName;
+        private readonly Timer _timer;
 
         /// <summary>
         /// Словарь для автозамен
         /// </summary>
         public readonly Dictionary<string, string> CorrectionNames;
+
+        public bool IsReady { get; private set; }
 
         public Fuzzy() : this(FILE_NAME)
         {
@@ -33,7 +43,7 @@ namespace FuzzySearch
             _fileName = fileName;
 
             // Вычитываем файл с автозаменами
-            lock (_correctionsLock)
+            //lock (_correctionsLock)
             {
                 if (File.Exists(_fileName))
                 {
@@ -42,7 +52,15 @@ namespace FuzzySearch
                 }
                 else
                     CorrectionNames = new Dictionary<string, string>();
+
+                _logger.Info($"Объект создан. Прочитано автозамен: {CorrectionNames.Count}");
             }
+
+            _timer = new Timer(SAVE_DELAY);
+            _timer.Elapsed += SaveCorrections;
+            _timer.AutoReset = false;
+
+            IsReady = true;
         }
 
         /// <summary>
@@ -183,19 +201,34 @@ namespace FuzzySearch
                 foreach (string replaceWord in replaceWords)
                     CorrectionNames[replaceWord] = keyWord;
 
+                _logger.Info($"Добавлена замена: {string.Join(";", replaceWords)} на {keyWord}");
                 Save();
             }
+        }
 
-            //Replace();
+        /// <summary>
+        /// Запустить таймер сохранения автозамен
+        /// </summary>
+        private void Save()
+        {
+            _timer.Stop();
+            _timer.Start();
+
+            _logger.Debug("Таймер сохранения перезапущен");
         }
 
         /// <summary>
         /// Сохранить автозамены
         /// </summary>
-        public void Save()
+        private void SaveCorrections(Object source, ElapsedEventArgs e)
         {
-            string text = JsonConvert.SerializeObject(CorrectionNames);
-            File.WriteAllText(_fileName, text);
+            lock (_correctionsLock)
+            {
+                string text = JsonConvert.SerializeObject(CorrectionNames);
+                File.WriteAllText(_fileName, text);
+
+                _logger.Info("Файл автозамен успешно записан");
+            }
         }
     }
 }
