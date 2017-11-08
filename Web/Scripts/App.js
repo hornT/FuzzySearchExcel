@@ -7,7 +7,9 @@ const variantsChoose = document.querySelector('#variantsChoose');
 const variantsCount = document.querySelector('#variantsCount');
 const columnSelect = document.querySelector('#column');
 const possibleBaseNamesData = document.querySelector('#possibleBaseNames');
-const overlap = $('.overlap');
+const overlap = $('#overlapLoader');
+const popupPrepareResults = $('#prepareResults');
+const popupPrepareResultsList = document.querySelector('#prepareResultsList');
 
 var variantIndex = 0;
 var possibleReplaces;
@@ -277,4 +279,57 @@ function AddLog(text) {
     textLog.innerHTML = text;
 
     logElement.appendChild(textLog);
+}
+
+/**
+ * Получить предварительный результат
+ */
+function GetPrepareResult() {
+    overlap.show();
+
+    $.ajax({
+        type: "GET",
+        url: "/Home/GetPrepareResult",
+        //data: { values: values, keyWord: selectedValue },
+        success: function (res) {
+            ShowPrepareResult(res.values);
+        },
+        error: function (q, w, e, r) {
+            console.log('error');
+            AddLog('Произошла ошибка. Подробности в консоли'); // TODO error
+        },
+        complete: function () {
+            overlap.hide();
+        }
+    });
+}
+
+/**
+ * Показать предварительный результат
+ */
+function ShowPrepareResult(values) {
+
+    popupPrepareResultsList.innerHTML = '';
+
+    values.forEach((elem, ind) => {
+        const option = document.createElement('option');
+        option.innerHTML = elem;
+
+        popupPrepareResultsList.appendChild(option);
+    });
+
+    popupPrepareResults.show();
+}
+
+/**
+ * Скрыть предварительный результат
+ * @param {any} e
+ */
+function HidePrepareResult(e) {
+
+    if (e.target.tagName !== 'DIV') {
+        e.preventDefault();
+        return;
+    }
+    popupPrepareResults.hide();
 }

@@ -195,6 +195,24 @@ namespace Web.Controllers
             return File(fileBytes, System.Net.Mime.MediaTypeNames.Application.Octet, originalFileName);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        public ActionResult GetPrepareResult()
+        {
+            SessionCache sc = GetSessionCache();
+            string[] values = new string[sc.Values.Length];
+
+            sc.Values.CopyTo(values, 0);
+            Fuzzy.Replace(values);
+
+            string[] result = (new HashSet<string>(values)).OrderBy(x => x).ToArray();
+
+            return Json(new { values = result }, JsonRequestBehavior.AllowGet);
+        }
+
         private XSSFWorkbook GetSSFWorkbook()
         {
             SessionCache sc = GetSessionCache();

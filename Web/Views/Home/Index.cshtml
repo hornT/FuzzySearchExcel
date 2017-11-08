@@ -10,6 +10,7 @@
     <select id="column" class="column-selector form-control"></select>
     <div class="btn-group">
         <button type="button" class="btn btn-success" onclick="ProcessFile()">Обработка</button>
+        <button type="button" class="btn btn-success" onclick="GetPrepareResult()">Результат</button>
         <a href="~/Home/DownloadFile" target="_blank" class="btn btn-success" role="button">Скачать</a>
     </div>
 </div>
@@ -17,27 +18,27 @@
 <div style="margin-top: 10px">
     <table>
         <tr style="text-align: center">
-            <td style="width: 500px">
+            <td class="first-column">
                 <h4>Корректировка наименования</h4>
             </td>   
-            <td style="width: 300px;">
+            <td class="second-column">
                 <h4>Базовое наименование</h4>
             </td>
         </tr>
 
         <tr>
-            <td style="width: 500px; text-align: center;">
+            <td class="first-column" style="text-align: center;">
                 <span>Варианты наименований </span>
                 <span id="variantsCount" class="badge">0</span>
             </td>
-            <td style="width: 300px;">
+            <td class="second-column">
                 <input id="baseNameInp" list="possibleBaseNames" type="search" placeholder="Введите базовое название" style="width: 100%"/>
                 <datalist id="possibleBaseNames"></datalist>
             </td>
         </tr>
 
         <tr>
-            <td style="width: 500px">
+            <td class="first-column">
                 <select id="variantsChoose" class="variants-choose form-control" style="display: inline-block" size="10" onclick="VariantClick(event)"></select>
                 <div class="btn-group">
                     <button type="button" class="btn btn-primary" onclick="Next()">Пропустить</button>
@@ -45,7 +46,7 @@
                     <button type="button" class="btn btn-primary" onclick="AddValue()">Добавить</button>
                 </div>
             </td>
-            <td style="width: 300px; vertical-align: top; padding: 10px;">
+            <td class="second-column" style="width: 300px; vertical-align: top; padding: 10px;">
                 <div>Ранее базовым считалось:</div>
                 <div style="margin: 10px 0; height: 20px"><a href="#" id="baseNameLnk" onclick="BaseNameClick(event)"></a></div>
                 <div>Кликните на подходящее наименование, чтобы обозначить его за базовое. Либо выберите его из списка слева и нажмите кнопку «Добавить»</div>
@@ -60,9 +61,17 @@
     <div id="log" class="log"></div>
 </div>
 
-<div class="overlap">
+<div class="overlap" id="overlapLoader">
     <div class="vertical-center">
         <div class="loader"></div>
+    </div>
+</div>
+
+<div class="overlap" id="prepareResults" onclick="HidePrepareResult(event)">
+    <div class="vertical-center">
+        <div style="width: 400px; margin: auto;">
+            <select id="prepareResultsList" class="variants-choose form-control" style="display: inline-block" size="10"></select>
+        </div>
     </div>
 </div>
 

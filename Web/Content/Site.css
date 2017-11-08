@@ -88,12 +88,13 @@ textarea {
     -ms-transform: translateY(-50%);
     transform: translateY(-50%);
 }
-.overlap{
+.overlap {
     position: absolute;
     height: 100%;
     width: 100%;
     top: 0;
     display: none;
+    background-color: rgba(240, 248, 255, 0.5);
 }
 .loader {
     border: 16px solid #f3f3f3;
@@ -113,4 +114,10 @@ textarea {
     100% {
         transform: rotate(360deg);
     }
+}
+.first-column{
+    width: 500px;
+}
+.second-column {
+    width: 500px;
 }
