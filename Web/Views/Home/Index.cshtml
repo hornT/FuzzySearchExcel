@@ -2,16 +2,16 @@
     ViewBag.Title = "Home Page";
 }
 
-<input type="file" id="fileInput" onchange="fileChange(event)" class="input-file">
-<div id="dropZone" class="drop-zone" onclick="dropZoneOnClick()">Нажмите, или перетащите файл сюда</div>
+<input type="file" id="fileInput" onchange="fileChange(event)" accept=".xls,.xlsx" class="input-file">
+<div id="dropZone" class="drop-zone" onclick="dropZoneOnClick()">Загрузите Excel-файл</div>
 
 <div style="margin-top: 10px">
-    <div>Колонка</div>
+    <div><h4>Выберите колонку</h4></div>
     <select id="column" class="column-selector form-control"></select>
-    <div class="btn-group">
-        <button type="button" class="btn btn-success" onclick="ProcessFile()">Обработка</button>
-        <button type="button" class="btn btn-success" onclick="GetPrepareResult()">Результат</button>
-        <a href="~/Home/DownloadFile" target="_blank" class="btn btn-success" role="button">Скачать</a>
+    <div @*class="btn-group"*@ style="margin-top: 2px;">
+        <button type="button" class="btn btn-primary" onclick="ProcessFile()">Начать обработку</button>
+        <button type="button" class="btn btn-primary" onclick="GetPrepareResult()">Посмотреть результат</button>
+        <a href="~/Home/DownloadFile" target="_blank" class="btn btn-primary" role="button">Скачать</a>
     </div>
 </div>
 
@@ -22,7 +22,7 @@
                 <h4>Корректировка наименования</h4>
             </td>   
             <td class="second-column">
-                <h4>Базовое наименование</h4>
+                @*<h4>Базовое наименование</h4>*@
             </td>
         </tr>
 
@@ -32,22 +32,26 @@
                 <span id="variantsCount" class="badge">0</span>
             </td>
             <td class="second-column">
-                <input id="baseNameInp" list="possibleBaseNames" type="search" placeholder="Введите базовое название" style="width: 100%"/>
-                <datalist id="possibleBaseNames"></datalist>
+                <h4 style="text-align: center;">Базовое наименование</h4>
+                @*<input id="baseNameInp" list="possibleBaseNames" type="search" placeholder="Выберите из списка или введите подходящий вариант" style="width: 100%"/>
+                <datalist id="possibleBaseNames"></datalist>*@
             </td>
         </tr>
 
         <tr>
             <td class="first-column">
                 <select id="variantsChoose" class="variants-choose form-control" style="display: inline-block" size="10" onclick="VariantClick(event)"></select>
-                <div class="btn-group">
+                <div @*class="btn-group"*@>
                     <button type="button" class="btn btn-primary" onclick="Next()">Пропустить</button>
                     <button type="button" class="btn btn-primary" onclick="Remove()">Исключить</button>
                     <button type="button" class="btn btn-primary" onclick="AddValue()">Добавить</button>
                 </div>
             </td>
-            <td class="second-column" style="width: 300px; vertical-align: top; padding: 10px;">
-                <div>Ранее базовым считалось:</div>
+            <td class="second-column" style="width: 300px; vertical-align: top; padding: 0 0 0 10px;">
+                <input id="baseNameInp" list="possibleBaseNames" type="search" placeholder="Выберите из списка или введите подходящий вариант" style="width: 100%" />
+                <datalist id="possibleBaseNames"></datalist>
+
+                <div><h4>Ранее базовым считалось</h4></div>
                 <div style="margin: 10px 0; height: 20px"><a href="#" id="baseNameLnk" onclick="BaseNameClick(event)"></a></div>
                 <div>Кликните на подходящее наименование, чтобы обозначить его за базовое. Либо выберите его из списка слева и нажмите кнопку «Добавить»</div>
             </td>
@@ -56,9 +60,11 @@
     </table>
 </div>
 
-<div class="footer-log">
-    <span>Описание процесса</span>
-    <div id="log" class="log"></div>
+<div @*class="footer-log"*@ style="margin-top: 10px;">
+    @*<span>Описание процесса</span>*@
+    <div id="log" class="log">
+        <div><h4>Описание процесса</h4></div>
+    </div>
 </div>
 
 <div class="overlap" id="overlapLoader">

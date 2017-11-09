@@ -63,6 +63,7 @@ textarea {
     display: flex;
     align-items: center;
     justify-content: center;
+    text-decoration: underline;
 }
 .column-selector{
     width: 500px;
@@ -78,7 +79,7 @@ textarea {
 }
 .log {
     height: 200px;
-    border: 1px solid;
+    border: 2px solid #337ab7;
     overflow-y: scroll;
 }
 .vertical-center {
