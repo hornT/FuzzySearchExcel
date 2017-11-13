@@ -88,7 +88,18 @@ namespace FuzzySearch
             // Поиск названий, похожих на базовые
             PossibleReplace[] possibleReplaces = AutoCorrection(fuzzyness, valuesArr);
 
-            return new PrepareResult(possibleReplaces, replacementLog, CorrectionNames.Values.ToArray());
+            string[] baseNames = GetBaseNames();
+
+            return new PrepareResult(possibleReplaces, replacementLog, baseNames);
+        }
+
+        /// <summary>
+        /// Получить список базовых названий
+        /// </summary>
+        /// <returns></returns>
+        public string[] GetBaseNames()
+        {
+            return CorrectionNames.Values.Distinct().OrderBy(x => x).ToArray();
         }
 
         /// <summary>

@@ -14,18 +14,12 @@ namespace FuzzySearch
         /// </summary>
         public readonly List<string> ReplacementLog;
 
-        ///// <summary>
-        ///// Лог с результатом автопоиска замен
-        ///// </summary>
-        //public Dictionary<string, string> AutoCorrectionResult;
-
         public readonly string[] BaseNames;
 
         public PrepareResult(PossibleReplace[] possibleReplaces, List<string> replacementLog, string[] baseNames)
         {
             PossibleReplaces = possibleReplaces;
             ReplacementLog = replacementLog;
-            //AutoCorrectionResult = autoCorrectionResult;
             BaseNames = baseNames;
         }
     }

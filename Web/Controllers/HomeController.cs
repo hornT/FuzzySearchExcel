@@ -147,7 +147,8 @@ namespace Web.Controllers
         /// <param name="values"></param>
         /// <param name="selectedValue"></param>
         /// <returns></returns>
-        public void AddCompany(string[] values, string keyWord)
+        [HttpGet]
+        public ActionResult AddCompany(string[] values, string keyWord)
         {
             _logger.Info($"Добавление компании для замены. {string.Join("|", values)} будут заменены на {keyWord}");
 
@@ -155,10 +156,14 @@ namespace Web.Controllers
             replaceWords.Remove(keyWord);
 
             Fuzzy.Add(keyWord, replaceWords);
+
+            string[] baseNames = Fuzzy.GetBaseNames();
+
+            return Json(new { baseNames }, JsonRequestBehavior.AllowGet);
         }
 
         /// <summary>
-        /// 
+        /// Обработать файл и скачать его
         /// </summary>
         /// <returns></returns>
         public FileResult DownloadFile()
@@ -196,7 +201,7 @@ namespace Web.Controllers
         }
 
         /// <summary>
-        /// 
+        /// Отобразить предварительный результат обработки
         /// </summary>
         /// <returns></returns>
         [HttpGet]

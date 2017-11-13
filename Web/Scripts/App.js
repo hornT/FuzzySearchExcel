@@ -5,6 +5,7 @@ const baseNameInp = document.querySelector('#baseNameInp');
 const baseNameLnk = document.querySelector('#baseNameLnk');
 const variantsChoose = document.querySelector('#variantsChoose');
 const variantsCount = document.querySelector('#variantsCount');
+const variantsTotalCount = document.querySelector('#variantsTotalCount');
 const columnSelect = document.querySelector('#column');
 const possibleBaseNamesData = document.querySelector('#possibleBaseNames');
 const overlap = $('#overlapLoader');
@@ -106,6 +107,9 @@ function InitColumns(columns) {
 
         columnSelect.appendChild(option);
     });
+
+    // Разблокировать кнопку "Начать обработку"
+    $('#btnProcessFile').prop('disabled', false);
 }
 
 /**
@@ -128,7 +132,6 @@ function ProcessFile() {
             AddLog(res.message);
             if (res.prepareResult) {
                 ShowVariants(res.prepareResult);
-                
             }
         },
         error: function (q, w, e, r) {
@@ -142,6 +145,21 @@ function ProcessFile() {
 }
 
 /**
+ * Заполнить список базовых имен
+ * @param {any} baseNames
+ */
+function FillBaseNames(baseNames) {
+
+    possibleBaseNamesData.innerHTML = '';
+    baseNames.forEach((elem, ind) => {
+        const option = document.createElement('option');
+        option.innerHTML = elem;
+
+        possibleBaseNamesData.appendChild(option);
+    });
+}
+
+/**
  * Отобразить варианты замены
  * @param {any} prepareResult
  */
@@ -150,20 +168,20 @@ function ShowVariants(prepareResult) {
     possibleReplaces = prepareResult.PossibleReplaces;
     baseNames = prepareResult.BaseNames;
 
-    variantIndex = 0;
+    variantIndex = -1;
+    variantsTotalCount.innerHTML = possibleReplaces.length;
 
     Next();
 
     AddReplaceLog(prepareResult.ReplacementLog);
 
     // Запомнить базовые названия
-    possibleBaseNamesData.innerHTML = '';
-    baseNames.forEach((elem, ind) => {
-        const option = document.createElement('option');
-        option.innerHTML = elem;
+    FillBaseNames(baseNames);
 
-        possibleBaseNamesData.appendChild(option);
-    });
+    // Разблокировать кнопки
+    $('#btnNext').prop('disabled', false); // Следующий
+    $('#btnPrepareResult').prop('disabled', false); // Посмотреть результат
+    $('#btnDownLoadFile').removeClass('disabled'); // Скачать
 }
 
 /**
@@ -191,11 +209,54 @@ function Next() {
     if (variantIndex >= possibleReplaces.length)
         return;
 
-    variantsCount.innerHTML = possibleReplaces.length - variantIndex;
+    variantIndex++;
 
-    const variants = possibleReplaces[variantIndex++];
+    // Разблокировать кнопку "предыдущий"
+    if (variantIndex > 0)
+        $('#btnPrevious').prop('disabled', false);
+
+    FillCurrentVariantSet();
+
+    if (variantIndex >= possibleReplaces.length - 1)
+        $('#btnNext').prop('disabled', true);
+}
+
+/**
+ * Выбор предыдущего набора возможных вариантов
+ */
+function Previous() {
+    variantsChoose.innerHTML = '';
+    baseNameInp.value = '';
+
+    if (variantIndex <= 0)
+        return;
+
+    // Разблокировать кнопку "следующий"
+    $('#btnNext').prop('disabled', false);
+
+    variantIndex--;
+
+    FillCurrentVariantSet();
+
+    if (variantIndex <= 0)
+        $('#btnPrevious').prop('disabled', true);
+}
+
+/**
+ * Заполнить набор вариантов для замены
+ */
+function FillCurrentVariantSet() {
+
+    variantsCount.innerHTML = variantIndex + 1;
+
+    const variants = possibleReplaces[variantIndex];
 
     baseNameLnk.innerHTML = variants.BaseName;
+
+    // Заблокировать/разблокировать кнопки исключить и добавить
+    const isValuesExists = variants.Values.length > 0;
+    $('#btnExclude').prop('disabled', isValuesExists === false); // Исключить
+    $('#btnAddValue').prop('disabled', isValuesExists === false); // Добавить
 
     variants.Values.forEach((elem, ind) => {
         const option = document.createElement('option');
@@ -227,9 +288,15 @@ function VariantClick(event) {
 /**
  * Удалить выбранное название компании
  */
-function Remove() {
+function Exclude() {
 
     $("#variantsChoose option:selected").remove();
+
+    // Заблокировать/разблокировать кнопки исключить и добавить
+    // TODO
+    //variantsChoose
+    //$('#btnExclude').prop('disabled', isValuesExists); // Исключить
+    //$('#btnAddValue').prop('disabled', isValuesExists); // Добавить
 }
 
 /**
@@ -254,7 +321,8 @@ function AddValue() {
         url: "/Home/AddCompany",
         data: { values: values, keyWord: selectedValue },
         success: function (res) {
-            //AddLog(res.message);
+            // Запомнить базовые названия
+            FillBaseNames(res.baseNames);
         },
         error: function (q, w, e, r) {
             console.log('error');
@@ -318,7 +386,9 @@ function ShowPrepareResult(values) {
         popupPrepareResultsList.appendChild(option);
     });
 
-    popupPrepareResults.show();
+    //$('#myModal').modal('show');
+    //popupPrepareResults.show();
+    popupPrepareResults.modal('show');
 }
 
 /**
@@ -331,5 +401,7 @@ function HidePrepareResult(e) {
         e.preventDefault();
         return;
     }
-    popupPrepareResults.hide();
+
+    //popupPrepareResults.hide();
+    popupPrepareResults.modal({ show: false });
 }
