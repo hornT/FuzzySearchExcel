@@ -152,6 +152,19 @@ namespace FuzzySearch
             }
             _logger.Info($"Найдено {replaces.Count} похожих на базовые названия компаний");
 
+            // Поиск похожих названий на замененные
+            string[] replaceWords = CorrectionNames.Keys.ToArray();
+            foreach (string replaceWord in replaceWords)
+            {
+                string[] sameNames = Search(replaceWord, allNames, fuzzyness);
+
+                if (sameNames.Length > 0)
+                {
+                    replaces.Add(new PossibleReplace(sameNames, CorrectionNames[replaceWord]));
+                    Array.ForEach(sameNames, x => allNames.Remove(x));
+                }
+            }
+
             // Поиск похожих названий между собой
             HashSet<int> passIndexes = new HashSet<int>();
             string[] allNamesArr = allNames.ToArray();
