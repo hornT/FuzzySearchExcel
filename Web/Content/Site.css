@@ -6,6 +6,7 @@ body {
     padding-bottom: 20px;*/
     height: 100%;
     margin: 0;
+    background: linear-gradient(to bottom, #ffffff 5%,#e2e2e2 100%)
 }
 
 /* Set padding to keep content from hitting the edges */
@@ -121,4 +122,21 @@ textarea {
 }
 .second-column {
     width: 500px;
+}
+
+
+.modal-header,
+.modal-body,
+.modal-footer{
+    padding: 8px;
+}
+.modal-dialog {
+    margin-bottom: 0;
+}
+
+.modeless {
+    left: 50%;
+    bottom: auto;
+    right: auto;
+    margin-left: -300px;
 }

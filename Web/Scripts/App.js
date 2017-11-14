@@ -11,10 +11,13 @@ const possibleBaseNamesData = document.querySelector('#possibleBaseNames');
 const overlap = $('#overlapLoader');
 const popupPrepareResults = $('#prepareResults');
 const popupPrepareResultsList = document.querySelector('#prepareResultsList');
+const popupExclusionsWindow = $('#exclusionsWindow');
+const popupExclusionsList = document.querySelector('#exclusionsList');
 
 var variantIndex = 0;
 var possibleReplaces;
 var baseNames;
+var exclusions = [];
 
 $(document).ready(function () {
     var dropZone = $('#dropZone');
@@ -182,6 +185,9 @@ function ShowVariants(prepareResult) {
     $('#btnNext').prop('disabled', false); // Следующий
     $('#btnPrepareResult').prop('disabled', false); // Посмотреть результат
     $('#btnDownLoadFile').removeClass('disabled'); // Скачать
+    $('#btnExclusion').prop('disabled', false); // Необработанные
+
+    exclusions = [];
 }
 
 /**
@@ -251,14 +257,25 @@ function FillCurrentVariantSet() {
 
     const variants = possibleReplaces[variantIndex];
 
-    baseNameLnk.innerHTML = variants.BaseName;
-
     // Заблокировать/разблокировать кнопки исключить и добавить
     const isValuesExists = variants.Values.length > 0;
     $('#btnExclude').prop('disabled', isValuesExists === false); // Исключить
     $('#btnAddValue').prop('disabled', isValuesExists === false); // Добавить
 
-    variants.Values.forEach((elem, ind) => {
+    FillVariantsWindow(variants.Values, variants.BaseName);
+}
+
+/**
+ * Заполнить окно с вариантами замен
+ * @param {any} variants
+ * @param {any} baseName
+ */
+function FillVariantsWindow(variants, baseName) {
+
+    variantsChoose.innerHTML = '';
+    baseNameLnk.innerHTML = baseName || '';
+
+    variants.forEach((elem, ind) => {
         const option = document.createElement('option');
         option.innerHTML = elem;
         option.value = elem;
@@ -282,7 +299,9 @@ function BaseNameClick(event) {
  */
 function VariantClick(event) {
 
-    baseNameInp.value = variantsChoose.selectedOptions[0].value;
+    const selectedValue = variantsChoose.selectedOptions[0];
+    if (selectedValue)
+        baseNameInp.value = selectedValue.value;
 }
 
 /**
@@ -290,7 +309,15 @@ function VariantClick(event) {
  */
 function Exclude() {
 
-    $("#variantsChoose option:selected").remove();
+    const selectedValue = $("#variantsChoose option:selected");
+
+    // Добавить этот вариант в список исключенных для дальнейшей обработки
+    const bsdata = popupExclusionsWindow.data('bs.modal');
+    if (bsdata && bsdata.isShown !== true) {
+        exclusions.push(selectedValue[0].value);
+    }
+
+    selectedValue.remove();
 
     // Заблокировать/разблокировать кнопки исключить и добавить
     // TODO
@@ -311,8 +338,8 @@ function AddValue() {
         return;
     }
 
-    const options = $('#variantsChoose option');
-    const values = $.map(options, v => v.value);
+    //const options = $('#variantsChoose option');
+    const values = $.map(variantsChoose.options, v => v.value);
 
     overlap.show();
 
@@ -323,6 +350,15 @@ function AddValue() {
         success: function (res) {
             // Запомнить базовые названия
             FillBaseNames(res.baseNames);
+
+            // Помечаем текущий вариант как обработанный
+            const bsdata = popupExclusionsWindow.data('bs.modal');
+            if (bsdata && bsdata.isShown !== true) {
+                const variantSet = possibleReplaces[variantIndex];
+                variantSet.IsProcessed = true;
+
+                Next();
+            }            
         },
         error: function (q, w, e, r) {
             console.log('error');
@@ -332,8 +368,6 @@ function AddValue() {
             overlap.hide();
         }
     });
-
-    Next();
 }
 
 /**
@@ -358,7 +392,6 @@ function GetPrepareResult() {
     $.ajax({
         type: "GET",
         url: "/Home/GetPrepareResult",
-        //data: { values: values, keyWord: selectedValue },
         success: function (res) {
             ShowPrepareResult(res.values);
         },
@@ -386,8 +419,6 @@ function ShowPrepareResult(values) {
         popupPrepareResultsList.appendChild(option);
     });
 
-    //$('#myModal').modal('show');
-    //popupPrepareResults.show();
     popupPrepareResults.modal('show');
 }
 
@@ -402,6 +433,45 @@ function HidePrepareResult(e) {
         return;
     }
 
-    //popupPrepareResults.hide();
     popupPrepareResults.modal({ show: false });
+}
+
+/**
+ * Показать окно с необработанными вариантами
+ */
+function ShowExclusionsWindow() {
+
+    popupExclusionsList.innerHTML = '';
+
+    const elements = possibleReplaces
+        .filter(el => el.IsProcessed !== true)
+        .map(el => el.Values);
+    const exclusionValues = [].concat.apply([], elements).concat(exclusions).sort();
+
+    exclusionValues.forEach((elem, ind) => {
+        const option = document.createElement('option');
+        option.innerHTML = elem;
+
+        popupExclusionsList.appendChild(option);
+    });
+
+    //popupExclusionsWindow.modal('show');
+    popupExclusionsWindow.modal({ backdrop: false });
+    // Хак https://stackoverflow.com/questions/8168746/bootstrap-css-how-to-make-a-modal-dialog-modal-without-affecting-the-backgroun
+    //$('.modal-backdrop').removeClass("modal-backdrop");
+}
+
+/**
+ * Переместить выбранные исключенные наименования для дальнейшей обработки
+ */
+function MoveFromExcludeToVariants() {
+
+    const selectedOptions = popupExclusionsList.selectedOptions;
+    const selectedValues = $.map(selectedOptions, v => v.value);
+
+    FillVariantsWindow(selectedValues);
+
+    const elemetsCount = selectedOptions.length;
+    for (let i = elemetsCount - 1; i >= 0; i--)
+        selectedOptions[i].remove();
 }

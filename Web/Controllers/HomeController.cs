@@ -147,7 +147,7 @@ namespace Web.Controllers
         /// <param name="values"></param>
         /// <param name="selectedValue"></param>
         /// <returns></returns>
-        [HttpGet]
+        [HttpPost]
         public ActionResult AddCompany(string[] values, string keyWord)
         {
             _logger.Info($"Добавление компании для замены. {string.Join("|", values)} будут заменены на {keyWord}");
