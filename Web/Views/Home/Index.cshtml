@@ -39,7 +39,9 @@
                 <select id="variantsChoose" class="variants-choose form-control" style="display: inline-block" size="10" onclick="VariantClick(event)"></select>
             </td>
             <td class="second-column" style="width: 300px; vertical-align: top; padding: 0 0 0 10px;">
-                <input id="baseNameInp" list="possibleBaseNames" type="search" placeholder="Выберите из списка или введите подходящий вариант" style="width: 100%" />
+                @*<input id="baseNameInp" list="possibleBaseNames" type="search" placeholder="Выберите из списка или введите подходящий вариант" style="width: 100%" />*@
+                <input id="baseNameInp" list="possibleBaseNames" type="search" placeholder="Выберите из списка или введите подходящий вариант" style="width: calc(100% - 65px)" />
+                <button type="button" class="btn btn-xs btn-primary" style="margin-top: -5px" disabled="disabled" onclick="DeleteBaseName()" id="btnDeleteBaseName">Удалить</button>
                 <datalist id="possibleBaseNames"></datalist>
 
                 <div><h4>Ранее базовым считалось</h4></div>

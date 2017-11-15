@@ -84,6 +84,9 @@ function onFileLoad(e, fileName) {
             AddLog(res.message);
             if (res.columns)
                 InitColumns(res.columns);
+
+            // Сбросить значение файла
+            document.getElementById("fileInput").value = "";
         },
         error: function (q, w, e, r) {
             console.log('error');
@@ -93,6 +96,17 @@ function onFileLoad(e, fileName) {
             overlap.hide();
         }
     });
+}
+
+/**
+ * Залогировать ошибку запроса
+ * @param {any} xhr
+ * @param {any} status
+ * @param {any} error
+ */
+function AjaxErrorLog(xhr, status, error) {
+    console.error(`Произошла ошибка. xhr: ${xhr}, status: ${status}, error: ${error}`);
+    AddLog('Произошла ошика. Подробности в консоли');
 }
 
 /**
@@ -121,7 +135,7 @@ function InitColumns(columns) {
 function ProcessFile() {
     const columnIndex = columnSelect.selectedIndex;
     if (columnIndex < 0) {
-        AddLog('Не выбрана колонка'); // TODO error
+        AddLog('Не выбрана колонка');
         return;
     }
 
@@ -137,10 +151,7 @@ function ProcessFile() {
                 ShowVariants(res.prepareResult);
             }
         },
-        error: function (q, w, e, r) {
-            console.log('error');
-            AddLog('Произошла ошика. Подробности в консоли'); // TODO error
-        },
+        error: AjaxErrorLog,
         complete: function () {
             overlap.hide();
         }
@@ -186,6 +197,7 @@ function ShowVariants(prepareResult) {
     $('#btnPrepareResult').prop('disabled', false); // Посмотреть результат
     $('#btnDownLoadFile').removeClass('disabled'); // Скачать
     $('#btnExclusion').prop('disabled', false); // Необработанные
+    $('#btnDeleteBaseName').prop('disabled', false); // Удалить базовое наименование
 
     exclusions = [];
 }
@@ -338,7 +350,6 @@ function AddValue() {
         return;
     }
 
-    //const options = $('#variantsChoose option');
     const values = $.map(variantsChoose.options, v => v.value);
 
     overlap.show();
@@ -360,10 +371,7 @@ function AddValue() {
                 Next();
             }            
         },
-        error: function (q, w, e, r) {
-            console.log('error');
-            AddLog('Произошла ошика. Подробности в консоли'); // TODO error
-        },
+        error: AjaxErrorLog,
         complete: function () {
             overlap.hide();
         }
@@ -395,10 +403,7 @@ function GetPrepareResult() {
         success: function (res) {
             ShowPrepareResult(res.values);
         },
-        error: function (q, w, e, r) {
-            console.log('error');
-            AddLog('Произошла ошибка. Подробности в консоли'); // TODO error
-        },
+        error: AjaxErrorLog,
         complete: function () {
             overlap.hide();
         }
@@ -455,7 +460,6 @@ function ShowExclusionsWindow() {
         popupExclusionsList.appendChild(option);
     });
 
-    //popupExclusionsWindow.modal('show');
     popupExclusionsWindow.modal({ backdrop: false });
     // Хак https://stackoverflow.com/questions/8168746/bootstrap-css-how-to-make-a-modal-dialog-modal-without-affecting-the-backgroun
     //$('.modal-backdrop').removeClass("modal-backdrop");
@@ -474,4 +478,30 @@ function MoveFromExcludeToVariants() {
     const elemetsCount = selectedOptions.length;
     for (let i = elemetsCount - 1; i >= 0; i--)
         selectedOptions[i].remove();
+}
+
+/**
+ * Удалить базовое наименование
+ */
+function DeleteBaseName() {
+    // TODO это временный функционал!
+
+    overlap.show();
+
+    const selectedValue = baseNameInp.value;
+
+    $.ajax({
+        type: "POST",
+        url: "/Home/DeleteBaseName",
+        data: { baseName: selectedValue },
+        success: function (res) {
+            // Запомнить базовые названия
+            FillBaseNames(res.baseNames);
+            baseNameInp.value = '';
+        },
+        error: AjaxErrorLog,
+        complete: function () {
+            overlap.hide();
+        }
+    });
 }

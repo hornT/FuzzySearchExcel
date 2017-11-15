@@ -159,7 +159,7 @@ namespace Web.Controllers
 
             string[] baseNames = Fuzzy.GetBaseNames();
 
-            return Json(new { baseNames }, JsonRequestBehavior.AllowGet);
+            return Json(new { baseNames });
         }
 
         /// <summary>
@@ -245,6 +245,20 @@ namespace Web.Controllers
             }
 
             return cache;
+        }
+
+        /// <summary>
+        /// Удалить базовое наименование
+        /// </summary>
+        /// <param name="baseName"></param>
+        [HttpPost]
+        public ActionResult DeleteBaseName(string baseName)
+        {
+            Fuzzy.DeleteBaseName(baseName);
+
+            string[] baseNames = Fuzzy.GetBaseNames();
+
+            return Json(new { baseNames });
         }
     }
 

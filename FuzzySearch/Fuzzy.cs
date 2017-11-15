@@ -254,5 +254,25 @@ namespace FuzzySearch
                 _logger.Info("Файл автозамен успешно записан");
             }
         }
+
+        /// <summary>
+        /// Удалить базовое наименование
+        /// </summary>
+        /// <param name="baseName"></param>
+        public void DeleteBaseName(string baseName)
+        {
+            _logger.Info($"Удаления базового наименования {baseName}");
+            // TODO временный функционал
+            if (string.IsNullOrEmpty(baseName) == true)
+                return;
+
+            lock (_correctionsLock)
+            {
+                string[] keys = CorrectionNames.Where(x => x.Value.Equals(baseName)).Select(x => x.Key).ToArray();
+                _logger.Info($"Будут удалены {keys.Length} замен: {string.Join("; ", keys)}");
+                foreach (string key in keys)
+                    CorrectionNames.Remove(key);
+            }
+        }
     }
 }
