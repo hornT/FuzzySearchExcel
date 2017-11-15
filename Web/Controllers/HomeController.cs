@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Web;
 using System.Web.Mvc;
 
@@ -90,25 +91,86 @@ namespace Web.Controllers
 
             int firstRowIndex = sheet.FirstRowNum;
             int lastRowIndex = sheet.LastRowNum;
-            var firstRow = sheet.GetRow(firstRowIndex);
-
-            columns = firstRow.Cells.Select(x => x.StringCellValue).ToArray();
-            _logger.Info($"Строки с {firstRowIndex} по {lastRowIndex}. Всего колонок {columns.Length}");
+            //var firstRow = sheet.GetRow(firstRowIndex);
 
             SessionCache sc = GetSessionCache();
             sc.FirstRowIndex = firstRowIndex;
             sc.LastRowIndex = lastRowIndex;
 
+            //columns = firstRow.Cells.Select(x => x.StringCellValue).ToArray();
+            columns = GetColumns(sheet, firstRowIndex, lastRowIndex);
+            _logger.Info($"Строки с {firstRowIndex} по {lastRowIndex}. Всего колонок {columns.Length}");
+
             return columns;
+        }
+
+        /// <summary>
+        /// Получить список колонок
+        /// </summary>
+        /// <param name="sheet"></param>
+        /// <param name="firstRowIndex"></param>
+        /// <param name="lastRowIndex"></param>
+        /// <returns></returns>
+        private string[] GetColumns(ISheet sheet, int firstRowIndex, int lastRowIndex)
+        {
+            var firstRow = sheet.GetRow(firstRowIndex);
+
+            string[] totalColumns = firstRow.Cells.Select(x => x.StringCellValue).ToArray();
+            Dictionary<string, int> columnsDictionary = Enumerable.Range(0, totalColumns.Length).ToDictionary(x => totalColumns[x], x => x);
+            HashSet<string> remainingColumns = new HashSet<string>(totalColumns);
+            // Регулярка отсеивает даты и числа
+            Regex reg = new Regex("^[.,\\d]+$");
+
+            SessionCache sc = GetSessionCache();
+            sc.Columns = columnsDictionary;
+
+            // Пробежимся по всему документу
+            // Если в колонке есть хотя бы 1 значение: пустое, дата, число или короче 3х символов, то не учитываем эту колонку
+            for (int i = firstRowIndex + 1; i <= lastRowIndex; i++)
+            {
+                string[] tmpColumns = remainingColumns.ToArray();
+                foreach (string column in tmpColumns)
+                {
+                    int columnIndex = columnsDictionary[column];
+                    var cell = sheet.GetRow(i).GetCell(columnIndex);
+                    if (cell == null)
+                    {
+                        remainingColumns.Remove(column);
+                        continue;
+                    }
+
+                    string value = cell.ToString();
+                    CellType cellType = sheet.GetRow(i).GetCell(columnIndex).CellType;
+
+                    if (cellType == CellType.Numeric || string.IsNullOrEmpty(value) || value.Length < 3 || reg.IsMatch(value))
+                    {
+                        remainingColumns.Remove(column);
+                    }
+                }
+            }
+
+            return remainingColumns.ToArray();
         }
 
         /// <summary>
         /// Первоначальная обработка файла
         /// </summary>
-        /// <param name="columnIndex"></param>
+        /// <param name="columnName"></param>
         /// <returns></returns>
-        public ActionResult ProcessFile(int columnIndex)
+        public ActionResult ProcessFile(string columnName)
         {
+            _logger.Info($"Обработка файла по колонке ");
+
+            SessionCache sc = GetSessionCache();
+            int columnIndex;
+            if(sc.Columns == null || sc.Columns.TryGetValue(columnName, out columnIndex) == false)
+            {
+                _logger.Error($"Не удалось найти колонку {columnName}");
+                return Json(new { message = $"Не удалось найти колонку {columnName}" }); ;
+            }
+
+            _logger.Info($"Найден номер колонки: {columnIndex}");
+
             PrepareResult prepareResult = PrepareAutoCorrection(columnIndex, _fuzzyness);
             if (prepareResult == null)
                 return Json(new { message = "Не удалось обработать файл"});
@@ -269,6 +331,8 @@ namespace Web.Controllers
         public int LastRowIndex { get; set; }
 
         public int ColumnIndex { get; set; }
+
+        public Dictionary<string, int> Columns { get; set; }
 
         public string[] Values { get; set; }
 

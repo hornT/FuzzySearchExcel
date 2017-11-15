@@ -133,6 +133,7 @@ function InitColumns(columns) {
  * Обработать файл и получить предварительный результат замен
  */
 function ProcessFile() {
+
     const columnIndex = columnSelect.selectedIndex;
     if (columnIndex < 0) {
         AddLog('Не выбрана колонка');
@@ -141,10 +142,12 @@ function ProcessFile() {
 
     overlap.show();
 
+    const selectedColumn = columnSelect.selectedOptions[0].text;
+
     $.ajax({
         type: "POST",
         url: "/Home/ProcessFile",
-        data: { columnIndex: columnIndex },
+        data: { columnName: selectedColumn },
         success: function (res) {
             AddLog(res.message);
             if (res.prepareResult) {
