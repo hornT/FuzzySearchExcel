@@ -16,8 +16,8 @@ namespace FuzzySearch
         /// <summary>
         /// Время до отложенного сохранения автозамен
         /// </summary>
-        //private const int SAVE_DELAY = 5 * 60 * 1000; // 5 минут в миллисекундах
-        private const int SAVE_DELAY = 10 * 1000;
+        private const int SAVE_DELAY = 5 * 60 * 1000; // 5 минут в миллисекундах
+        //private const int SAVE_DELAY = 10 * 1000;
 
         public const string FILE_NAME = "corrections.xml";
 
@@ -197,16 +197,19 @@ namespace FuzzySearch
         /// <returns></returns>
         private string[] Search(string value, IEnumerable<string> wordList, double fuzzyness)
         {
+            FuzzyComparer comparer = new FuzzyComparer(fuzzyness, fuzzyness, 3 , 3);
             string[] result = wordList
                 .Where(x =>
-                    Metrics.HammingDistance(value.ToUpper(), x.ToUpper()) > fuzzyness ||
-                    Metrics.LevenshteinDistance(value.ToUpper(), x.ToUpper()) > fuzzyness ||
-                    //Metrics.OverlapCoefficient(value.ToUpper(), x.ToUpper()) > fuzzyness ||
-                    Metrics.RatcliffObershelpSimilarity(value.ToUpper(), x.ToUpper()) > fuzzyness ||
-                    Metrics.SorensenDiceIndex(value.ToUpper(), x.ToUpper()) > fuzzyness ||
-                    Metrics.TanimotoCoefficient(value.ToUpper(), x.ToUpper()) > fuzzyness ||
-                    //Metrics.JaccardDistance(value.ToUpper(), x.ToUpper()) > fuzzyness ||
-                    false
+                // TODO после тестирования удалить лишние модули
+                    //Metrics.HammingDistance(value.ToUpper(), x.ToUpper()) > fuzzyness ||
+                    //Metrics.LevenshteinDistance(value.ToUpper(), x.ToUpper()) > fuzzyness ||
+                    ////Metrics.OverlapCoefficient(value.ToUpper(), x.ToUpper()) > fuzzyness ||
+                    //Metrics.RatcliffObershelpSimilarity(value.ToUpper(), x.ToUpper()) > fuzzyness ||
+                    //Metrics.SorensenDiceIndex(value.ToUpper(), x.ToUpper()) > fuzzyness ||
+                    //Metrics.TanimotoCoefficient(value.ToUpper(), x.ToUpper()) > fuzzyness ||
+                    ////Metrics.JaccardDistance(value.ToUpper(), x.ToUpper()) > fuzzyness ||
+                    //false
+                    comparer.IsFuzzyEqual(value, x)
                     )
                 .ToArray();
 

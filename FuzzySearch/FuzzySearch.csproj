@@ -48,6 +48,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Fuzzy.cs" />
+    <Compile Include="FuzzyComparer.cs" />
     <Compile Include="Hamming.cs" />
     <Compile Include="Jaccard.cs" />
     <Compile Include="Jaro.cs" />

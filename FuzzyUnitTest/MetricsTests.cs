@@ -44,5 +44,42 @@ namespace FuzzySearch.Tests
             //distance = Metrics.LevenshteinDistance("kevin", "kevyn");
             //Assert.IsTrue(distance > 0.7);
         }
+
+        [TestMethod()]
+        public void CompanyWrongsTest()
+        {
+            var comparer = new FuzzyComparer(0.7, 0.7, 3, 3);
+
+            string[][] wrongs =
+            {
+                new string[] { "HINO MOTORS LTD", "ISUZU MOTORS LTD.", "NISSAN MOTORS LTD." },
+                new string[] { "DAIHATSU  MOTOR CORP", "ISUZU MOTOR CORP.", "MITSUBISHI MOTORS CORP.", "TOYOTA MOTOR CORP." },
+                new string[] { "CHENGDU DAYUN AUTOMOBILE GROUP CO.,LTD", "SHAANXI AUTOMOBILE GROUP CO.,LTD" },
+                new string[] { "ISUZU MOTORS CO., ТАИЛАНД", "MOTORS CO., ТАИЛАНД" }
+            };
+
+            foreach(string[] testNames in wrongs)
+                for (int i = 0; i < testNames.Length; i++)
+                    for (int j = i + 1; j < testNames.Length; j++)
+                        Assert.IsFalse(comparer.IsFuzzyEqual(testNames[i], testNames[j]));
+        }
+
+        [TestMethod()]
+        public void CompanyCorrectTest()
+        {
+            var comparer = new FuzzyComparer(0.7, 0.7, 3, 3);
+
+            string[][] wrongs =
+            {
+                new string[] { "DAF TRUCKS", "DAF TRUCK", "DAF TRUCKS NV", "DAF TRUCKS N.V."},
+                new string[] { "FCA ITALY S.P.A", "FCA ITALY S.P.A." },
+                new string[] { "BEIQI FOTON MOTOR CO., LTD", "BEIQI FOTON MOTOR CO., LTD., КИТАЙ", "BEIQI FOTON MOTOR CO., LTD." }
+            };
+
+            foreach (string[] testNames in wrongs)
+                for (int i = 0; i < testNames.Length; i++)
+                    for (int j = i + 1; j < testNames.Length; j++)
+                        Assert.IsTrue(comparer.IsFuzzyEqual(testNames[i], testNames[j]));
+        }
     }
 }

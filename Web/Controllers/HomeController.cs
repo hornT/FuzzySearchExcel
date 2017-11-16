@@ -17,6 +17,7 @@ namespace Web.Controllers
     {
         private const string CACHE_KEY = "cache";
         private const double DEFAULT_FUZZYNESS = 0.7;
+        private const int WRONG_COLUMN_PERCENT = 20;
 
         private readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly double _fuzzyness;
@@ -149,13 +150,13 @@ namespace Web.Controllers
             for (int i = 0; i < totalColumns.Length; i++)
             {
                 double wrongPercent = wrongCells[i] / lastRowIndex * 100;
-                if (wrongPercent < 20)
+                if (wrongPercent < WRONG_COLUMN_PERCENT)
                     columns.Add(totalColumns[i]);
             }
 
             return columns.ToArray();
         }
-
+        
         /// <summary>
         /// Первоначальная обработка файла
         /// </summary>
