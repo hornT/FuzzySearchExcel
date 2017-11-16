@@ -53,12 +53,17 @@
         <tr>
             <td colspan="2">
                 <button type="button" class="btn btn-primary" disabled="disabled" onclick="Previous()" id="btnPrevious">&laquo; Предыдущий</button>
-                <button type="button" class="btn btn-primary" disabled="disabled" onclick="Next()" id="btnNext">Следующий &raquo;</button>
-
-                <button type="button" class="btn btn-primary" disabled="disabled" onclick="Exclude()" id="btnExclude">Исключить</button>
+                
                 <button type="button" class="btn btn-primary" disabled="disabled" onclick="AddValue()" id="btnAddValue">Добавить</button>
-                <button type="button" class="btn btn-primary" disabled="disabled" onclick="GetPrepareResult()" id="btnPrepareResult">Посмотреть результат</button>
+                <button type="button" class="btn btn-primary" disabled="disabled" onclick="Exclude()" id="btnExclude">Исключить</button>
+                <button type="button" class="btn btn-primary" disabled="disabled" onclick="Next()" id="btnNext">Следующий &raquo;</button>
                 <button type="button" class="btn btn-primary" disabled="disabled" onclick="ShowExclusionsWindow()" id="btnExclusion">Необработанные</button>
+            </td>
+        </tr>
+
+        <tr>
+            <td colspan="2" style="padding-top: 2px;">
+                <button type="button" class="btn btn-primary" disabled="disabled" onclick="GetPrepareResult()" id="btnPrepareResult">Посмотреть результат</button>
                 <a href="~/Home/DownloadFile" target="_blank" class="btn btn-primary disabled" role="button" id="btnDownLoadFile">Скачать</a>
             </td>
         </tr>
