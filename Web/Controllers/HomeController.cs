@@ -117,9 +117,9 @@ namespace Web.Controllers
 
             string[] totalColumns = firstRow.Cells.Select(x => x.StringCellValue).ToArray();
             Dictionary<string, int> columnsDictionary = Enumerable.Range(0, totalColumns.Length).ToDictionary(x => totalColumns[x], x => x);
-            HashSet<string> remainingColumns = new HashSet<string>(totalColumns);
             // Регулярка отсеивает даты и числа
             Regex reg = new Regex("^[.,\\d]+$");
+            double[] wrongCells = new double[totalColumns.Length];
 
             SessionCache sc = GetSessionCache();
             sc.Columns = columnsDictionary;
@@ -128,28 +128,32 @@ namespace Web.Controllers
             // Если в колонке есть хотя бы 1 значение: пустое, дата, число или короче 3х символов, то не учитываем эту колонку
             for (int i = firstRowIndex + 1; i <= lastRowIndex; i++)
             {
-                string[] tmpColumns = remainingColumns.ToArray();
-                foreach (string column in tmpColumns)
+                for(int columnIndex = 0; columnIndex < totalColumns.Length; columnIndex++)
                 {
-                    int columnIndex = columnsDictionary[column];
                     var cell = sheet.GetRow(i).GetCell(columnIndex);
                     if (cell == null)
                     {
-                        remainingColumns.Remove(column);
+                        //wrongCells[columnIndex]++;
                         continue;
                     }
 
                     string value = cell.ToString();
                     CellType cellType = sheet.GetRow(i).GetCell(columnIndex).CellType;
-
-                    if (cellType == CellType.Numeric || string.IsNullOrEmpty(value) || value.Length < 3 || reg.IsMatch(value))
-                    {
-                        remainingColumns.Remove(column);
-                    }
+                    if (cellType == CellType.Numeric ||/* string.IsNullOrEmpty(value) ||*/ value.Length < 3 || reg.IsMatch(value))
+                        wrongCells[columnIndex]++;
                 }
             }
 
-            return remainingColumns.ToArray();
+            // Вычисляем % ненужных наименований в колонке
+            List<string> columns = new List<string>();
+            for (int i = 0; i < totalColumns.Length; i++)
+            {
+                double wrongPercent = wrongCells[i] / lastRowIndex * 100;
+                if (wrongPercent < 20)
+                    columns.Add(totalColumns[i]);
+            }
+
+            return columns.ToArray();
         }
 
         /// <summary>
