@@ -367,12 +367,13 @@ function AddValue() {
 
             // Помечаем текущий вариант как обработанный
             const bsdata = popupExclusionsWindow.data('bs.modal');
-            if (bsdata && bsdata.isShown !== true) {
-                const variantSet = possibleReplaces[variantIndex];
-                variantSet.IsProcessed = true;
+            if (bsdata && bsdata.isShown === true)
+                return;
 
-                Next();
-            }            
+            const variantSet = possibleReplaces[variantIndex];
+            variantSet.IsProcessed = true;
+
+            Next();
         },
         error: AjaxErrorLog,
         complete: function () {
