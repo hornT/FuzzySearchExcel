@@ -227,7 +227,7 @@ function Next() {
     variantsChoose.innerHTML = '';
     baseNameInp.value = '';
 
-    if (variantIndex >= possibleReplaces.length)
+    if (variantIndex >= possibleReplaces.length || possibleReplaces.length === 0)
         return;
 
     variantIndex++;
