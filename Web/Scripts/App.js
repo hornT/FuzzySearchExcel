@@ -70,6 +70,7 @@ function fileChange(e) {
 /**
  * Загрузка файла
  * @param {any} e
+ * @param {any} fileName
  */
 function onFileLoad(e, fileName) {
     const data = e.target.result;
@@ -227,7 +228,7 @@ function Next() {
     variantsChoose.innerHTML = '';
     baseNameInp.value = '';
 
-    if (variantIndex >= possibleReplaces.length)
+    if (variantIndex >= possibleReplaces.length || possibleReplaces.length === 0)
         return;
 
     variantIndex++;
