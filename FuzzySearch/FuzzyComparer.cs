@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace FuzzySearch
 {
@@ -10,6 +11,11 @@ namespace FuzzySearch
     public sealed class FuzzyComparer
     {
         // https://github.com/denxc/SentencesFuzzyComparison
+
+        #region Поля
+
+        private readonly Regex _braceReg = new Regex("\\([\\s\\S]+\\)", RegexOptions.Compiled);
+        private readonly Regex _acronymsReg = new Regex("[\\s,](ltd\\.|ltd|inc\\.|inc|s\\.p\\.a\\.|spa|sas|nv|n\\.v\\.|srl|gmbh|uab|sia|oy)", RegexOptions.Compiled);
 
         /// <summary>
         /// Порог принятия предложений эквивалентными.
@@ -34,6 +40,8 @@ namespace FuzzySearch
         /// Длина подстроки при сравнении слов.
         /// </summary>
         public int SubtokenLength { get; private set; }
+
+        #endregion
 
         /// <summary>
         /// Создает нечесткий компаратор.
@@ -206,6 +214,8 @@ namespace FuzzySearch
         /// Приводит предложение к нормальному виду:
         /// - в нижнем регистре
         /// - удалены не буквы и не цифры
+        /// - удалены слова в скобках
+        /// - удалены ключевые сокращения
         /// </summary>
         /// <param name="sentence">Предложение.</param>
         /// <returns>Нормализованное предложение.</returns>
@@ -213,15 +223,28 @@ namespace FuzzySearch
         {
             var resultContainer = new StringBuilder(100);
             var lowerSentece = sentence.ToLower();
+
+            // Убираем все слова в скобках
+            lowerSentece = _braceReg.Replace(lowerSentece, string.Empty);
+
             foreach (var c in lowerSentece)
             {
                 if (IsNormalChar(c))
                 {
                     resultContainer.Append(c);
                 }
+                else
+                {
+                    resultContainer.Append(' '); // Вместо неподходящих символов ставим пробелы, чтобы слова не сливались в итоге
+                }
             }
 
-            return resultContainer.ToString();
+            lowerSentece = resultContainer.ToString();
+
+            // Убираем все сокращения
+            lowerSentece = _acronymsReg.Replace(lowerSentece, string.Empty);
+
+            return lowerSentece;
         }
 
         /// <summary>
