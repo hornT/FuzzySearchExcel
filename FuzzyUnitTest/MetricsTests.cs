@@ -69,14 +69,18 @@ namespace FuzzySearch.Tests
         {
             var comparer = new FuzzyComparer(0.7, 0.7, 3, 3);
 
-            string[][] wrongs =
+            string[][] corrects =
             {
                 new string[] { "DAF TRUCKS", "DAF TRUCK", "DAF TRUCKS NV", "DAF TRUCKS N.V."},
                 new string[] { "FCA ITALY S.P.A", "FCA ITALY S.P.A." },
-                new string[] { "BEIQI FOTON MOTOR CO., LTD", "BEIQI FOTON MOTOR CO., LTD., КИТАЙ", "BEIQI FOTON MOTOR CO., LTD." }
+                new string[] { "BEIQI FOTON MOTOR CO., LTD", "BEIQI FOTON MOTOR CO., LTD., КИТАЙ", "BEIQI FOTON MOTOR CO., LTD." },
+
+                new string[]{ "CATERPILLAR (THAILAND) LTD", "CATERPILLAR INC.", "CATERPILLAR INC. DECATUR, IL USA" },
+
+                new string[]{ "DAF", "DAF TRUCK", "DAF-LEYLAND" }
             };
 
-            foreach (string[] testNames in wrongs)
+            foreach (string[] testNames in corrects)
                 for (int i = 0; i < testNames.Length; i++)
                     for (int j = i + 1; j < testNames.Length; j++)
                         Assert.IsTrue(comparer.IsFuzzyEqual(testNames[i], testNames[j]));

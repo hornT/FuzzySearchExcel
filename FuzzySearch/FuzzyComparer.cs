@@ -190,6 +190,7 @@ namespace FuzzySearch
         {
             var tokens = new List<string>();
             var words = sentence.Split(' ');
+
             foreach (var word in words)
             {
                 if (word.Length >= MinWordLength)

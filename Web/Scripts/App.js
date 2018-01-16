@@ -70,6 +70,7 @@ function fileChange(e) {
 /**
  * Загрузка файла
  * @param {any} e
+ * @param {any} fileName
  */
 function onFileLoad(e, fileName) {
     const data = e.target.result;
