@@ -268,6 +268,17 @@ namespace Web.Controllers
         }
 
         /// <summary>
+        /// Скачать файл библиотеки
+        /// </summary>
+        /// <returns></returns>
+        public FileResult DownloadLib()
+        {
+            byte[] fileBytes = Fuzzy.GetLibFile();
+
+            return File(fileBytes, System.Net.Mime.MediaTypeNames.Application.Octet, "lib.xml");
+        }
+
+        /// <summary>
         /// Отобразить предварительный результат обработки
         /// </summary>
         /// <returns></returns>

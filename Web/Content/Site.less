@@ -1,0 +1,231 @@
+﻿html {
+    height: 100%;
+}
+
+body {
+    /*padding-top: 50px;
+    padding-bottom: 20px;*/
+    height: 100%;
+    margin: 0;
+    /*background: linear-gradient(to bottom, #ffffff 5%,#e2e2e2 100%)*/
+}
+
+.header {
+    height: 90px;
+    padding: 25px;
+    background: linear-gradient(to bottom, #ffffff 5%,#e2e2e2 100%);
+}
+
+/* Set padding to keep content from hitting the edges */
+.body-content {
+    padding-left: 15px;
+    padding-right: 15px;
+    position: relative;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+/* Override the default bootstrap behavior where horizontal description lists 
+   will truncate terms that are too long to fit in the left column 
+*/
+.dl-horizontal dt {
+    white-space: normal;
+}
+
+/* Set width on the form input elements since they're 100% wide by default */
+input,
+select,
+textarea {
+    /*max-width: 280px;*/
+}
+
+#dropZone.hover {
+    background: #ddd;
+    border-color: #aaa;
+}
+
+#dropZone.error {
+    background: #faa;
+    border-color: #f00;
+}
+
+#dropZone.drop {
+    background: #afa;
+    border-color: #0f0;
+}
+
+.input-file {
+    visibility: hidden;
+}
+
+.drop-zone {
+    cursor: pointer;
+    /*border: 2px dashed;*/
+    height: 70px;
+    /*width: 80%;
+    margin: auto;*/
+    /*margin: 0 40px;*/
+    /*border-radius: 10px;*/
+    font-size: 1.5em;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /*text-decoration: underline;*/
+}
+
+.column-selector {
+    /*width: 500px;*/
+}
+
+.variants-choose {
+    width: 500px;
+}
+
+.footer-log {
+    position: absolute;
+    right: 15px;
+    left: 15px;
+    bottom: 10px;
+}
+
+.log {
+    height: 200px;
+    /*border: 2px solid #337ab7;*/
+    .border-blue;
+    overflow-y: scroll;
+}
+
+.vertical-center {
+    position: relative;
+    top: 50%;
+    -webkit-transform: translateY(-50%);
+    -ms-transform: translateY(-50%);
+    transform: translateY(-50%);
+}
+
+.flex{
+    display: flex;
+}
+.justify-content-space-between {
+    justify-content: space-between;
+}
+.justify-content-center {
+    justify-content: center;
+}
+
+.overlap {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    top: 0;
+    display: none;
+    background-color: rgba(240, 248, 255, 0.5);
+}
+
+.loader {
+    border: 16px solid #f3f3f3;
+    border-top: 16px solid #337ab7;
+    border-bottom: 16px solid #337ab7;
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    animation: spin 2s linear infinite;
+    margin: auto;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.first-column {
+    width: 500px;
+}
+
+.second-column {
+    width: 500px;
+}
+
+
+.modal-header,
+.modal-body,
+.modal-footer {
+    padding: 8px;
+}
+
+.modal-dialog {
+    margin-bottom: 0;
+}
+
+.modeless {
+    left: 50%;
+    bottom: auto;
+    right: auto;
+    margin-left: -300px;
+}
+
+@color-blue: #03c;
+@color-light-blue: #C6D9F1;
+@color-light-silver: #F2F2F2;
+
+.text-align-center{
+    text-align: center;
+}
+
+.title-text-blue {
+    color: @color-blue;
+}
+
+.title-text-main {
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 10px;
+}
+
+.title-text-first {
+    font-size: 18px;
+}
+
+.title-text-second {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.background-blue {
+    /*background-color: #337ab7;*/
+    background-color: @color-light-blue;
+    /*opacity: 0.65;*/
+}
+.background-light-silver {
+    background-color: @color-light-silver;
+}
+
+.border-blue {
+    /*border-radius: 10px;*/
+    /*border: 3px solid #0070C0;*/
+    border: 3px solid @color-blue;
+}
+
+.border-radius {
+    border-radius: 10px;
+}
+
+/*Переопределение boottrap стилей*/
+.btn {
+    opacity: 1 !important;
+    /*background-color: #C6D9F1;*/
+    .background-blue;
+    /*background-color: #337ab7;*/
+    /*border: 3px solid #0070C0;
+    border-radius: 10px;*/
+    .border-blue;
+    .border-radius;
+    .title-text-blue;
+}

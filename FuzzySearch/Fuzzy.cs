@@ -29,7 +29,7 @@ namespace FuzzySearch
         /// <summary>
         /// Словарь для автозамен
         /// </summary>
-        public readonly Dictionary<string, string> CorrectionNames;
+        private readonly Dictionary<string, string> CorrectionNames;
 
         public bool IsReady { get; private set; }
 
@@ -100,6 +100,20 @@ namespace FuzzySearch
         public string[] GetBaseNames()
         {
             return CorrectionNames.Values.Distinct().OrderBy(x => x).ToArray();
+        }
+
+        /// <summary>
+        /// Получить файл с библиотекой наименований
+        /// </summary>
+        /// <returns></returns>
+        public byte[] GetLibFile()
+        {
+            lock (_correctionsLock)
+            {
+                string text = JsonConvert.SerializeObject(CorrectionNames);
+
+                return System.Text.Encoding.Default.GetBytes(text);
+            }
         }
 
         /// <summary>
