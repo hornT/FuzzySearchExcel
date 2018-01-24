@@ -4,14 +4,17 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Автокорерктор</title>
-    
+
+    @*<link href="~/Content/Site.min.css" rel="stylesheet" type="text/css" />*@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-    @Styles.Render("~/Content/css")
+    @*@Styles.Render("~/Content/css")*@
+    <link href="@Url.Content("~/Content/Site.min.css")" rel="stylesheet" type="text/css" />
+
 </head>
 <body>
     <div class="header">
         <div class="container">
-            <img style="float: left;" src="Images/logo.png" />
+            <img style="float: left;" src="~/Images/logo.png" />
             <h3 class="title-text-blue title-text-main">Автокорректор наименований компаний</h3>
         </div>
     </div>

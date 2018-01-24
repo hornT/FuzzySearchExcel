@@ -9,7 +9,7 @@
     <div><h4 class="title-text-first" style="margin-bottom: 0; margin-top: 15px;">Выбрать колонку</h4></div>
     <select id="column" class="column-selector form-control border-blue border-radius"></select>
     <div @*class="btn-group"*@ style="margin-top: 2px;">
-        <button id="btnProcessFile" type="button" class="btn btn-primary" disabled="disabled" onclick="ProcessFile()">Начать корректировку наименований</button>
+        <button id="btnProcessFile" type="button" class="btn btn-primary title-text-first" disabled="disabled" onclick="ProcessFile()">Начать корректировку наименований</button>
     </div>
 </div>
 
@@ -38,10 +38,10 @@
             <td class="first-column">
                 <select id="variantsChoose" class="variants-choose form-control border-blue background-light-silver" style="display: inline-block" size="10" onclick="VariantClick(event)"></select>
             </td>
-            <td class="second-column" style="width: 300px; vertical-align: top; padding: 0 0 0 10px;">
+            <td class="second-column" style="vertical-align: top; padding: 0 0 0 10px;">
                 @*<input id="baseNameInp" list="possibleBaseNames" type="search" placeholder="Выберите из списка или введите подходящий вариант" style="width: 100%" />*@
-                <input id="baseNameInp" class="border-blue" list="possibleBaseNames" type="search" placeholder="Выберите из списка или введите подходящий вариант" style="width: calc(100% - 70px)" />
-                <button type="button" class="btn btn-xs btn-primary" style="margin-top: -5px" disabled="disabled" onclick="DeleteBaseName()" id="btnDeleteBaseName">Удалить</button>
+                <input id="baseNameInp" class="border-blue base-name-input" list="possibleBaseNames" type="search" placeholder="Выберите из списка или введите подходящий вариант" />
+                <button type="button" class="btn btn-primary" style="margin-top: -5px" disabled="disabled" onclick="DeleteBaseName()" id="btnDeleteBaseName">Удалить</button>
                 <datalist id="possibleBaseNames"></datalist>
 
                 <div><h5 class="title-text-second">Ранее базовым считалось:</h5></div>
@@ -62,7 +62,7 @@
                 
                 @*<button type="button" class="btn btn-primary" disabled="disabled" onclick="ShowExclusionsWindow()" id="btnExclusion">Необработанные</button>*@
             </td>
-            <td class="text-align-center">
+            <td class="text-align-center" style="padding-top: 10px;">
                 <a href="~/Home/DownloadLib" target="_blank" class="btn btn-primary" role="button">Скачать библиотеку наименований</a>
             </td>
         </tr>

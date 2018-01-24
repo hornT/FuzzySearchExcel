@@ -67,13 +67,17 @@ textarea {
   /*width: 500px;*/
 }
 .variants-choose {
-  width: 500px;
+  /*width: 500px;*/
 }
 .footer-log {
   position: absolute;
   right: 15px;
   left: 15px;
   bottom: 10px;
+}
+.base-name-input {
+  width: calc(100% - 90px);
+  height: 38px;
 }
 .log {
   height: 200px;
@@ -125,11 +129,12 @@ textarea {
     transform: rotate(360deg);
   }
 }
-.first-column {
-  width: 500px;
-}
+/*.first-column {
+    width: 500px;
+}*/
+.first-column,
 .second-column {
-  width: 500px;
+  width: 50%;
 }
 .modal-header,
 .modal-body,
