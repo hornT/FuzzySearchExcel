@@ -52,6 +52,10 @@ $(document).ready(function () {
     };
 });
 
+function log(text) {
+    console.log(text);
+}
+
 function dropZoneOnClick() {
     $('#fileInput').trigger('click');
 }
@@ -225,10 +229,12 @@ function AddReplaceLog(replacedValues) {
  */
 function Next() {
 
+    log(`Next. variantIndex: ${variantIndex}, possibleReplaces.length: ${possibleReplaces.length}`);
+
     variantsChoose.innerHTML = '';
     baseNameInp.value = '';
 
-    if (variantIndex >= possibleReplaces.length || possibleReplaces.length === 0)
+    if (variantIndex >= (possibleReplaces.length - 1) || possibleReplaces.length === 0)
         return;
 
     variantIndex++;
