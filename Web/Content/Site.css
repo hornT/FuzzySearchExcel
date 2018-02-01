@@ -84,7 +84,7 @@ textarea {
   /*border: 2px solid #337ab7;*/
   /*border-radius: 10px;*/
   /*border: 3px solid #0070C0;*/
-  border: 3px solid #03c;
+  border: 3px solid #214fa1;
   overflow-y: scroll;
 }
 .vertical-center {
@@ -150,11 +150,14 @@ textarea {
   right: auto;
   margin-left: -300px;
 }
+/*@color-blue: #03c;
+@color-light-blue: #C6D9F1;*/
+/*@color-light-blue: #00a1dd;*/
 .text-align-center {
   text-align: center;
 }
 .title-text-blue {
-  color: #03c;
+  color: #214fa1;
 }
 .title-text-main {
   font-size: 24px;
@@ -171,7 +174,7 @@ textarea {
 }
 .background-blue {
   /*background-color: #337ab7;*/
-  background-color: #C6D9F1;
+  background-color: #84cfea;
   /*opacity: 0.65;*/
 }
 .background-light-silver {
@@ -180,7 +183,7 @@ textarea {
 .border-blue {
   /*border-radius: 10px;*/
   /*border: 3px solid #0070C0;*/
-  border: 3px solid #03c;
+  border: 3px solid #214fa1;
 }
 .border-radius {
   border-radius: 10px;
@@ -190,14 +193,14 @@ textarea {
   opacity: 1 !important;
   /*background-color: #C6D9F1;*/
   /*background-color: #337ab7;*/
-  background-color: #C6D9F1;
+  background-color: #84cfea;
   /*opacity: 0.65;*/
   /*background-color: #337ab7;*/
   /*border: 3px solid #0070C0;
     border-radius: 10px;*/
   /*border-radius: 10px;*/
   /*border: 3px solid #0070C0;*/
-  border: 3px solid #03c;
+  border: 3px solid #214fa1;
   border-radius: 10px;
-  color: #03c;
+  color: #214fa1;
 }

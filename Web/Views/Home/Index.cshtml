@@ -8,26 +8,19 @@
 <div style="margin-top: 10px">
     <div><h4 class="title-text-first" style="margin-bottom: 0; margin-top: 15px;">Выбрать колонку</h4></div>
     <select id="column" class="column-selector form-control border-blue border-radius"></select>
-    <div @*class="btn-group"*@ style="margin-top: 2px;">
+    <div style="margin-top: 2px;">
         <button id="btnProcessFile" type="button" class="btn btn-primary title-text-first" disabled="disabled" onclick="ProcessFile()">Начать корректировку наименований</button>
     </div>
 </div>
 
 <div style="margin-top: 10px">
     <table>
-        @*<tr style="text-align: center">
-            <td class="first-column">
-                <h4>Корректировка наименования</h4>
-            </td>   
-            <td class="second-column"></td>
-        </tr>*@
-
         <tr>
             <td class="first-column title-text-first text-align-center">
                 <span>Варианты наименований в базе </span>
-                <span id="variantsCount" @*class="badge"*@>0</span>
+                <span id="variantsCount" >0</span>
                 <span>из </span>
-                <span id="variantsTotalCount" @*class="badge"*@>0</span>
+                <span id="variantsTotalCount" >0</span>
             </td>
             <td class="second-column">
                 <h4 class="title-text-first text-align-center">Выбор базового наименования</h4>
@@ -39,7 +32,6 @@
                 <select id="variantsChoose" class="variants-choose form-control border-blue background-light-silver" style="display: inline-block" size="10" onclick="VariantClick(event)"></select>
             </td>
             <td class="second-column" style="vertical-align: top; padding: 0 0 0 10px;">
-                @*<input id="baseNameInp" list="possibleBaseNames" type="search" placeholder="Выберите из списка или введите подходящий вариант" style="width: 100%" />*@
                 <input id="baseNameInp" class="border-blue base-name-input" list="possibleBaseNames" type="search" placeholder="Выберите из списка или введите подходящий вариант" />
                 <button type="button" class="btn btn-primary" style="margin-top: -5px" disabled="disabled" onclick="DeleteBaseName()" id="btnDeleteBaseName">Удалить</button>
                 <datalist id="possibleBaseNames"></datalist>
@@ -51,7 +43,7 @@
         </tr>
 
         <tr>
-            <td @*colspan="2"*@ @*class="text-align-center"*@ style="padding-top: 10px;">
+            <td style="padding-top: 10px;">
                 <div class="flex justify-content-space-between">
                     <button type="button" class="btn btn-primary" disabled="disabled" onclick="Previous()" id="btnPrevious">&laquo; Предыдущий</button>
 
@@ -59,8 +51,6 @@
                     <button type="button" class="btn btn-primary" disabled="disabled" onclick="Exclude()" id="btnExclude">Исключить</button>
                     <button type="button" class="btn btn-primary" disabled="disabled" onclick="Next()" id="btnNext">Следующий &raquo;</button>
                 </div>
-                
-                @*<button type="button" class="btn btn-primary" disabled="disabled" onclick="ShowExclusionsWindow()" id="btnExclusion">Необработанные</button>*@
             </td>
             <td class="text-align-center" style="padding-top: 10px;">
                 <a href="~/Home/DownloadLib" target="_blank" class="btn btn-primary" role="button">Скачать библиотеку наименований</a>
@@ -68,10 +58,8 @@
         </tr>
 
         <tr>
-            <td @*colspan="2"*@ class="text-align-center" style="padding-top: 10px;">
+            <td class="text-align-center" style="padding-top: 10px;">
                 <button type="button" class="btn btn-primary" disabled="disabled" onclick="ShowExclusionsWindow()" id="btnExclusion">Необработанные варианты</button>
-                @*<button type="button" class="btn btn-primary" disabled="disabled" onclick="GetPrepareResult()" id="btnPrepareResult">Посмотреть результат</button>
-                <a href="~/Home/DownloadFile" target="_blank" class="btn btn-primary disabled" role="button" id="btnDownLoadFile">Скачать</a>*@
             </td>
         </tr>
         
@@ -80,10 +68,10 @@
 
 <div class="flex justify-content-center" style="margin-top: 15px;">
     <button type="button" class="btn btn-primary title-text-first" disabled="disabled" onclick="GetPrepareResult()" id="btnPrepareResult">Посмотреть результат</button>
-    <a href="~/Home/DownloadFile" target="_blank" class="btn btn-primary disabled title-text-first" style="margin-left: 20px;" role="button" id="btnDownLoadFile">Скачать файл</a>
+    <a href="~/Home/DownloadFile" target="_blank" class="btn btn-primary disabled title-text-first" style="margin-left: 20px; width: 215px;" role="button" id="btnDownLoadFile">Скачать файл</a>
 </div>
 
-<div @*class="footer-log"*@ style="margin-top: 10px;">
+<div style="margin-top: 10px;">
     <div id="log" class="log background-light-silver">
         <div><h5 class="title-text-second text-align-center" style="color: #777;">Описание процесса</h5></div>
     </div>
