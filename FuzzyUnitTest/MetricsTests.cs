@@ -11,6 +11,11 @@ namespace FuzzySearch.Tests
     [TestClass()]
     public class LevenshteinTests
     {
+        const double aThresholdSentence = 0.33;
+        const double aThresholdWord = 0.7;
+        const int aMinWordLength = 3;
+        const int aSubtokenLength = 3;
+
         [TestMethod()]
         public void LevenshteinDistanceTest()
         {
@@ -48,7 +53,7 @@ namespace FuzzySearch.Tests
         [TestMethod()]
         public void CompanyWrongsTest()
         {
-            var comparer = new FuzzyComparer(0.7, 0.7, 3, 3);
+            var comparer = new FuzzyComparer(aThresholdSentence, aThresholdWord, aMinWordLength, aSubtokenLength);
 
             string[][] wrongs =
             {
@@ -67,7 +72,7 @@ namespace FuzzySearch.Tests
         [TestMethod()]
         public void CompanyCorrectTest()
         {
-            var comparer = new FuzzyComparer(0.7, 0.7, 3, 3);
+            var comparer = new FuzzyComparer(aThresholdSentence, aThresholdWord, aMinWordLength, aSubtokenLength);
 
             string[][] corrects =
             {
@@ -75,10 +80,32 @@ namespace FuzzySearch.Tests
                 new string[] { "FCA ITALY S.P.A", "FCA ITALY S.P.A." },
                 new string[] { "BEIQI FOTON MOTOR CO., LTD", "BEIQI FOTON MOTOR CO., LTD., КИТАЙ", "BEIQI FOTON MOTOR CO., LTD." },
 
-                //new string[]{ "CATERPILLAR (THAILAND) LTD", "CATERPILLAR INC.", "CATERPILLAR INC. DECATUR, IL USA" },
+                new string[]{ "CATERPILLAR (THAILAND) LTD", "CATERPILLAR INC.", "CATERPILLAR INC. DECATUR, IL USA" },
                 new string[]{ "CATERPILLAR (THAILAND) LTD", "CATERPILLAR INC." },
 
                 //new string[]{ "DAF", "DAF TRUCK", "DAF-LEYLAND" }
+            };
+
+            foreach (string[] testNames in corrects)
+                for (int i = 0; i < testNames.Length; i++)
+                    for (int j = i + 1; j < testNames.Length; j++)
+                        Assert.IsTrue(comparer.IsFuzzyEqual(testNames[i], testNames[j]));
+        }
+
+        [TestMethod()]
+        public void CompanyCorrectTest2()
+        {
+            var comparer = new FuzzyComparer(aThresholdSentence, aThresholdWord, aMinWordLength, aSubtokenLength);
+
+            string[][] corrects =
+            {
+                new string[] { "CATERPILLAR INC.", "CATERPILLAR INC. DECATUR, IL USA"},
+
+                new string[] { "DAF", "DAF TRUCK", "DAF-LEYLAND" },
+
+                //new string[] { "FORD", "FORD MOTOR COMPANY OF SOUTHERN AFRICA", "FORD-WERKE GMBH" },
+
+                new string[]{ "ISUZU", "ISUZU MOTOR CORPORATION", "ISUZU MOTORS CO., ТАИЛАНД" }
             };
 
             foreach (string[] testNames in corrects)
