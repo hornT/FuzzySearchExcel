@@ -16,11 +16,17 @@ namespace FuzzySearch
 
         public readonly string[] BaseNames;
 
-        public PrepareResult(PossibleReplace[] possibleReplaces, List<string> replacementLog, string[] baseNames)
+        /// <summary>
+        /// Необработанные варианты
+        /// </summary>
+        public readonly string[] UnworkedNames;
+
+        public PrepareResult(PossibleReplace[] possibleReplaces, List<string> replacementLog, string[] baseNames, string[] unworkedNames)
         {
             PossibleReplaces = possibleReplaces;
             ReplacementLog = replacementLog;
             BaseNames = baseNames;
+            UnworkedNames = unworkedNames;
         }
     }
 

@@ -88,11 +88,11 @@ namespace FuzzySearch
             }).ToList();
 
             // Поиск названий, похожих на базовые
-            PossibleReplace[] possibleReplaces = AutoCorrection(valuesArr);
+            PossibleReplace[] possibleReplaces = AutoCorrection(valuesArr, out string[] unworkedNames);
 
             string[] baseNames = GetBaseNames();
 
-            return new PrepareResult(possibleReplaces, replacementLog, baseNames);
+            return new PrepareResult(possibleReplaces, replacementLog, baseNames, unworkedNames);
         }
 
         /// <summary>
@@ -144,7 +144,7 @@ namespace FuzzySearch
         /// Поиск и замена слов, очень похожих на ранее выбранные
         /// </summary>
         /// <returns></returns>
-        private PossibleReplace[] AutoCorrection(string[] values)
+        private PossibleReplace[] AutoCorrection(string[] values, out string[] unworkedNames)
         {
             List<PossibleReplace> replaces = new List<PossibleReplace>();
 
@@ -197,8 +197,12 @@ namespace FuzzySearch
 
                     foreach (string name in sameNames)
                         passIndexes.Add(Array.IndexOf(allNamesArr, name));
+
+                    Array.ForEach(sameNames, x => allNames.Remove(x));
                 }
             }
+
+            unworkedNames = allNames.ToArray();
 
             return replaces.ToArray();
         }

@@ -12,12 +12,25 @@ const overlap = $('#overlapLoader');
 const popupPrepareResults = $('#prepareResults');
 const popupPrepareResultsList = document.querySelector('#prepareResultsList');
 const popupExclusionsWindow = $('#exclusionsWindow');
+
+/**
+ * Список, в котором отобра
+ */
 const popupExclusionsList = document.querySelector('#exclusionsList');
 
 var variantIndex = 0;
 var possibleReplaces;
 var baseNames;
-var exclusions = [];
+
+/**
+ * Исключенные варианты
+ */
+let exclusions = [];
+
+/**
+ * Необработанные варианты
+ */
+let unworkedNames = [];
 
 $(document).ready(function () {
     var dropZone = $('#dropZone');
@@ -189,6 +202,7 @@ function ShowVariants(prepareResult) {
 
     possibleReplaces = prepareResult.PossibleReplaces;
     baseNames = prepareResult.BaseNames;
+    unworkedNames = prepareResult.UnworkedNames;
 
     variantIndex = -1;
     variantsTotalCount.innerHTML = possibleReplaces.length;
@@ -462,7 +476,11 @@ function ShowExclusionsWindow() {
     const elements = possibleReplaces
         .filter(el => el.IsProcessed !== true)
         .map(el => el.Values);
-    const exclusionValues = [].concat.apply([], elements).concat(exclusions).sort();
+
+    const exclusionValues = [].concat.apply([], elements)
+        .concat(exclusions)
+        .concat(unworkedNames)
+        .sort();
 
     exclusionValues.forEach((elem, ind) => {
         const option = document.createElement('option');

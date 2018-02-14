@@ -15,7 +15,7 @@ namespace FuzzySearch
         #region Поля
 
         private readonly Regex _braceReg = new Regex("\\([\\s\\S]+\\)", RegexOptions.Compiled);
-        private readonly Regex _acronymsReg = new Regex("[\\s,](ltd\\.|ltd|inc\\.|inc|s\\.p\\.a\\.|spa|sas|nv|n\\.v\\.|srl|gmbh|uab|sia|oy)", RegexOptions.Compiled);
+        private readonly Regex _acronymsReg = new Regex("[\\s,](ltd\\.|ltd|inc\\.|inc|s\\.p\\.a\\.|spa|sas|nv|n\\.v\\.|srl|gmbh|uab|sia|oy|group|motor|motors|automobile|corp|corp\\.)", RegexOptions.Compiled);
 
         /// <summary>
         /// Порог принятия предложений эквивалентными.
@@ -242,7 +242,8 @@ namespace FuzzySearch
             lowerSentece = resultContainer.ToString();
 
             // Убираем все сокращения
-            lowerSentece = _acronymsReg.Replace(lowerSentece, string.Empty);
+            //lowerSentece = _acronymsReg.Replace(lowerSentece, string.Empty);
+            lowerSentece = _acronymsReg.Replace(lowerSentece, " ");
 
             return lowerSentece;
         }
