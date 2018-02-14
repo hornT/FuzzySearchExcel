@@ -31,14 +31,16 @@ namespace FuzzySearch
         /// </summary>
         private readonly Dictionary<string, string> CorrectionNames;
 
+        private readonly FuzzyComparer _comparer;
+
         public bool IsReady { get; private set; }
 
-        public Fuzzy() : this(FILE_NAME)
-        {
+        //public Fuzzy() : this(FILE_NAME)
+        //{
 
-        }
+        //}
 
-        public Fuzzy(string fileName)
+        public Fuzzy(string fileName, double aThresholdSentence, double aThresholdWord, int minWordLength, int subtokenLength)
         {
             _fileName = fileName;
 
@@ -60,6 +62,8 @@ namespace FuzzySearch
             _timer.Elapsed += SaveCorrections;
             _timer.AutoReset = false;
 
+            _comparer = new FuzzyComparer(aThresholdSentence, aThresholdWord, minWordLength, subtokenLength);
+
             IsReady = true;
         }
 
@@ -69,9 +73,8 @@ namespace FuzzySearch
         /// </summary>
         /// <param name="values"></param>
         /// <param name=""></param>
-        /// <param name="fuzzyness"></param>
         /// <returns></returns>
-        public PrepareResult Prepare(IEnumerable<string> values, double fuzzyness)
+        public PrepareResult Prepare(IEnumerable<string> values)
         {
             string[] valuesArr = values.ToArray();
 
@@ -79,14 +82,13 @@ namespace FuzzySearch
             HashSet<string> replacements = Replace(valuesArr);
             List<string> replacementLog = replacements.Select(x =>
             {
-                string baseName;
-                CorrectionNames.TryGetValue(x, out baseName);
+                CorrectionNames.TryGetValue(x, out var baseName);
 
                 return $"Компания {x} заменена на {baseName}";
             }).ToList();
 
             // Поиск названий, похожих на базовые
-            PossibleReplace[] possibleReplaces = AutoCorrection(fuzzyness, valuesArr);
+            PossibleReplace[] possibleReplaces = AutoCorrection(valuesArr);
 
             string[] baseNames = GetBaseNames();
 
@@ -141,9 +143,8 @@ namespace FuzzySearch
         /// <summary>
         /// Поиск и замена слов, очень похожих на ранее выбранные
         /// </summary>
-        /// <param name="fuzzyness"></param>
         /// <returns></returns>
-        private PossibleReplace[] AutoCorrection(double fuzzyness, string[] values)
+        private PossibleReplace[] AutoCorrection(string[] values)
         {
             List<PossibleReplace> replaces = new List<PossibleReplace>();
 
@@ -156,7 +157,7 @@ namespace FuzzySearch
             // Поиск похожих названий на базовые
             foreach (string keyWord in keyWords)
             {
-                string[] sameNames = Search(keyWord, allNames, fuzzyness);
+                string[] sameNames = Search(keyWord, allNames);
 
                 if (sameNames.Length > 0)
                 {
@@ -170,7 +171,7 @@ namespace FuzzySearch
             string[] replaceWords = CorrectionNames.Keys.ToArray();
             foreach (string replaceWord in replaceWords)
             {
-                string[] sameNames = Search(replaceWord, allNames, fuzzyness);
+                string[] sameNames = Search(replaceWord, allNames);
 
                 if (sameNames.Length > 0)
                 {
@@ -189,7 +190,7 @@ namespace FuzzySearch
                 if (passIndexes.Contains(i))
                     continue;
 
-                string[] sameNames = Search(allNamesArr[i], allNamesArr, fuzzyness);
+                string[] sameNames = Search(allNamesArr[i], allNamesArr);
                 if (sameNames.Length > 1)
                 {
                     replaces.Add(new PossibleReplace(sameNames, null));
@@ -207,14 +208,12 @@ namespace FuzzySearch
         /// </summary>
         /// <param name="value"></param>
         /// <param name="wordList"></param>
-        /// <param name="fuzzyness"></param>
         /// <returns></returns>
-        private string[] Search(string value, IEnumerable<string> wordList, double fuzzyness)
+        private string[] Search(string value, IEnumerable<string> wordList)
         {
-            FuzzyComparer comparer = new FuzzyComparer(fuzzyness, fuzzyness, 3 , 3);
             string[] result = wordList
                 .Where(x =>
-                // TODO после тестирования удалить лишние модули
+                    // TODO после тестирования удалить лишние модули
                     //Metrics.HammingDistance(value.ToUpper(), x.ToUpper()) > fuzzyness ||
                     //Metrics.LevenshteinDistance(value.ToUpper(), x.ToUpper()) > fuzzyness ||
                     ////Metrics.OverlapCoefficient(value.ToUpper(), x.ToUpper()) > fuzzyness ||
@@ -223,7 +222,7 @@ namespace FuzzySearch
                     //Metrics.TanimotoCoefficient(value.ToUpper(), x.ToUpper()) > fuzzyness ||
                     ////Metrics.JaccardDistance(value.ToUpper(), x.ToUpper()) > fuzzyness ||
                     //false
-                    comparer.IsFuzzyEqual(value, x)
+                        _comparer.IsFuzzyEqual(value, x)
                     )
                 .ToArray();
 

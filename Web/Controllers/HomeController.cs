@@ -4,7 +4,6 @@ using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -16,11 +15,15 @@ namespace Web.Controllers
     public class HomeController : Controller
     {
         private const string CACHE_KEY = "cache";
-        private const double DEFAULT_FUZZYNESS = 0.7;
+        //private const double DEFAULT_FUZZYNESS = 0.7;
         private const int WRONG_COLUMN_PERCENT = 20;
 
         private readonly Logger _logger = LogManager.GetCurrentClassLogger();
-        private readonly double _fuzzyness;
+
+        private const double THRESHOLD_SENTENCE = 0.33;
+        private const double THRESHOLD_WORD = 0.7;
+        private const int MIN_WORD_LENGTH = 3;
+        private const int SUBTOKEN_LENGTH = 3;
 
         private static readonly object _sync = new object();
 
@@ -36,7 +39,7 @@ namespace Web.Controllers
                         if (_fuzzy == null)
                         {
                             string fileName = Path.Combine(HttpRuntime.AppDomainAppPath, "App_Data", Fuzzy.FILE_NAME);
-                            _fuzzy = new Fuzzy(fileName);
+                            _fuzzy = new Fuzzy(fileName, THRESHOLD_SENTENCE, THRESHOLD_WORD, MIN_WORD_LENGTH, SUBTOKEN_LENGTH);
                         }
                     }
                 }
@@ -45,13 +48,13 @@ namespace Web.Controllers
             }
         }
 
-        public HomeController()
-        {
-            string fuzzyValue = System.Configuration.ConfigurationManager.AppSettings["fuzzyness"].ToString();
-            if (string.IsNullOrEmpty(fuzzyValue) == true ||
-                double.TryParse(fuzzyValue, NumberStyles.Any, NumberFormatInfo.InvariantInfo, out _fuzzyness) == false)
-                _fuzzyness = DEFAULT_FUZZYNESS;
-        }
+        //public HomeController()
+        //{
+        //    //string fuzzyValue = System.Configuration.ConfigurationManager.AppSettings["thresholdSentence"];
+        //    //if (string.IsNullOrEmpty(fuzzyValue) == true ||
+        //    //    double.TryParse(fuzzyValue, NumberStyles.Any, NumberFormatInfo.InvariantInfo, out _thresholdSentence) == false)
+        //    //    _thresholdSentence = DEFAULT_FUZZYNESS;
+        //}
 
         public ActionResult Index()
         {
@@ -176,7 +179,7 @@ namespace Web.Controllers
 
             _logger.Info($"Найден номер колонки: {columnIndex}");
 
-            PrepareResult prepareResult = PrepareAutoCorrection(columnIndex, _fuzzyness);
+            PrepareResult prepareResult = PrepareAutoCorrection(columnIndex);
             if (prepareResult == null)
                 return Json(new { message = "Не удалось обработать файл"});
 
@@ -187,7 +190,7 @@ namespace Web.Controllers
         /// Выполнить автокоррекцию
         /// </summary>
         /// <param name="columnIndex"></param>
-        private PrepareResult PrepareAutoCorrection(int columnIndex, double fuzzyness)
+        private PrepareResult PrepareAutoCorrection(int columnIndex)
         {
             // Вычитываем все значения из выбранной колонки
             SessionCache sc = GetSessionCache();
@@ -205,7 +208,7 @@ namespace Web.Controllers
             }
             sc.Values = values;
             
-            return Fuzzy.Prepare(values, fuzzyness);
+            return Fuzzy.Prepare(values);
         }
 
         /// <summary>

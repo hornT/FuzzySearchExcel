@@ -1,20 +1,15 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using FuzzySearch;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using FuzzySearch;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace FuzzySearch.Tests
+namespace FuzzyUnitTest
 {
     [TestClass()]
     public class LevenshteinTests
     {
-        const double aThresholdSentence = 0.33;
-        const double aThresholdWord = 0.7;
-        const int aMinWordLength = 3;
-        const int aSubtokenLength = 3;
+        const double THRESHOLD_SENTENCE = 0.33;
+        const double A_THRESHOLD_WORD = 0.7;
+        const int A_MIN_WORD_LENGTH = 3;
+        const int A_SUBTOKEN_LENGTH = 3;
 
         [TestMethod()]
         public void LevenshteinDistanceTest()
@@ -53,7 +48,7 @@ namespace FuzzySearch.Tests
         [TestMethod()]
         public void CompanyWrongsTest()
         {
-            var comparer = new FuzzyComparer(aThresholdSentence, aThresholdWord, aMinWordLength, aSubtokenLength);
+            var comparer = new FuzzyComparer(THRESHOLD_SENTENCE, A_THRESHOLD_WORD, A_MIN_WORD_LENGTH, A_SUBTOKEN_LENGTH);
 
             string[][] wrongs =
             {
@@ -69,10 +64,10 @@ namespace FuzzySearch.Tests
                         Assert.IsFalse(comparer.IsFuzzyEqual(testNames[i], testNames[j]));
         }
 
-        [TestMethod()]
+        [TestMethod]
         public void CompanyCorrectTest()
         {
-            var comparer = new FuzzyComparer(aThresholdSentence, aThresholdWord, aMinWordLength, aSubtokenLength);
+            var comparer = new FuzzyComparer(THRESHOLD_SENTENCE, A_THRESHOLD_WORD, A_MIN_WORD_LENGTH, A_SUBTOKEN_LENGTH);
 
             string[][] corrects =
             {
@@ -81,9 +76,7 @@ namespace FuzzySearch.Tests
                 new string[] { "BEIQI FOTON MOTOR CO., LTD", "BEIQI FOTON MOTOR CO., LTD., КИТАЙ", "BEIQI FOTON MOTOR CO., LTD." },
 
                 new string[]{ "CATERPILLAR (THAILAND) LTD", "CATERPILLAR INC.", "CATERPILLAR INC. DECATUR, IL USA" },
-                new string[]{ "CATERPILLAR (THAILAND) LTD", "CATERPILLAR INC." },
-
-                //new string[]{ "DAF", "DAF TRUCK", "DAF-LEYLAND" }
+                new string[]{ "CATERPILLAR (THAILAND) LTD", "CATERPILLAR INC." }
             };
 
             foreach (string[] testNames in corrects)
@@ -92,10 +85,10 @@ namespace FuzzySearch.Tests
                         Assert.IsTrue(comparer.IsFuzzyEqual(testNames[i], testNames[j]));
         }
 
-        [TestMethod()]
+        [TestMethod]
         public void CompanyCorrectTest2()
         {
-            var comparer = new FuzzyComparer(aThresholdSentence, aThresholdWord, aMinWordLength, aSubtokenLength);
+            var comparer = new FuzzyComparer(THRESHOLD_SENTENCE, A_THRESHOLD_WORD, A_MIN_WORD_LENGTH, A_SUBTOKEN_LENGTH);
 
             string[][] corrects =
             {
