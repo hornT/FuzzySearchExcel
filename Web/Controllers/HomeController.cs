@@ -71,13 +71,21 @@ namespace Web.Controllers
             var fl = file.Split(',')[1];
             fileArr = Convert.FromBase64String(fl);
 
-            SessionCache sc = GetSessionCache();
-            sc.File = fileArr;
-            sc.FileName = fileName;
+            // В зависимости от разрешения файла принимаем решение - это библиотека замен или эксель файл для обработки
+            if(Path.GetExtension(fileName) == ".xml")
+            {
+                return Json(new { message = Fuzzy.UploadBaseNamesLib(fileArr) });
+            }
+            else
+            {
+                SessionCache sc = GetSessionCache();
+                sc.File = fileArr;
+                sc.FileName = fileName;
 
-            string[] columns = ReadExcelFile();
+                string[] columns = ReadExcelFile();
 
-            return Json(new { message = "Файл успешно загружен", columns });
+                return Json(new { message = "Файл успешно загружен", columns });
+            }
         }
 
         /// <summary>

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Timers;
 
 namespace FuzzySearch
@@ -29,7 +30,7 @@ namespace FuzzySearch
         /// <summary>
         /// Словарь для автозамен
         /// </summary>
-        private readonly Dictionary<string, string> CorrectionNames;
+        private Dictionary<string, string> CorrectionNames;
 
         private readonly FuzzyComparer _comparer;
 
@@ -248,6 +249,38 @@ namespace FuzzySearch
                 _logger.Info($"Добавлена замена: {string.Join(";", replaceWords)} на {keyWord}");
                 Save();
             }
+        }
+
+        /// <summary>
+        /// Загрузить пользовательскую библиотеку имен
+        /// </summary>
+        /// <param name="fileArr"></param>
+        /// <returns></returns>
+        public string UploadBaseNamesLib(byte[] fileArr)
+        {
+            _logger.Info($"Загрузка пользовательской библиотеки. fileArr.ln: {fileArr.Length}");
+
+            if (fileArr == null || fileArr.Length == 0)
+                return "Библиотека не загружена. Файл пуст";
+
+            string text = Encoding.UTF8.GetString(fileArr);
+
+            lock (_correctionsLock)
+            {
+                try
+                {
+                    CorrectionNames = JsonConvert.DeserializeObject<Dictionary<string, string>>(text);
+                }
+                catch(Exception ex)
+                {
+                    _logger.Error(ex);
+                    return "Библиотека не загружена. Неверный формат";
+                }
+            }
+
+            SaveCorrections(null, null);
+
+            return "Библиотека успешно загружена";
         }
 
         /// <summary>
