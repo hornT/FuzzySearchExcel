@@ -30,11 +30,11 @@ namespace FuzzySearch
         /// <summary>
         /// Словарь для автозамен
         /// </summary>
-        private Dictionary<string, string> CorrectionNames;
+        private Dictionary<string, string> _correctionNames;
 
         private readonly FuzzyComparer _comparer;
 
-        public bool IsReady { get; private set; }
+        public bool IsReady { get; }
 
         //public Fuzzy() : this(FILE_NAME)
         //{
@@ -51,12 +51,12 @@ namespace FuzzySearch
                 if (File.Exists(_fileName))
                 {
                     string text = File.ReadAllText(_fileName);
-                    CorrectionNames = JsonConvert.DeserializeObject<Dictionary<string, string>>(text);
+                    _correctionNames = JsonConvert.DeserializeObject<Dictionary<string, string>>(text);
                 }
                 else
-                    CorrectionNames = new Dictionary<string, string>();
+                    _correctionNames = new Dictionary<string, string>();
 
-                _logger.Info($"Объект создан. Прочитано автозамен: {CorrectionNames.Count}");
+                _logger.Info($"Объект создан. Прочитано автозамен: {_correctionNames.Count}");
             }
 
             _timer = new Timer(SAVE_DELAY);
@@ -73,7 +73,6 @@ namespace FuzzySearch
         /// Выполняется замена уже существующих значений и поиск похожестей
         /// </summary>
         /// <param name="values"></param>
-        /// <param name=""></param>
         /// <returns></returns>
         public PrepareResult Prepare(IEnumerable<string> values)
         {
@@ -83,7 +82,7 @@ namespace FuzzySearch
             HashSet<string> replacements = Replace(valuesArr);
             List<string> replacementLog = replacements.Select(x =>
             {
-                CorrectionNames.TryGetValue(x, out var baseName);
+                _correctionNames.TryGetValue(x, out var baseName);
 
                 return $"Компания {x} заменена на {baseName}";
             }).ToList();
@@ -102,7 +101,7 @@ namespace FuzzySearch
         /// <returns></returns>
         public string[] GetBaseNames()
         {
-            return CorrectionNames.Values.Distinct().OrderBy(x => x).ToArray();
+            return _correctionNames.Values.Distinct().OrderBy(x => x).ToArray();
         }
 
         /// <summary>
@@ -113,9 +112,9 @@ namespace FuzzySearch
         {
             lock (_correctionsLock)
             {
-                string text = JsonConvert.SerializeObject(CorrectionNames);
+                string text = JsonConvert.SerializeObject(_correctionNames);
 
-                return System.Text.Encoding.Default.GetBytes(text);
+                return Encoding.Default.GetBytes(text);
             }
         }
 
@@ -130,8 +129,8 @@ namespace FuzzySearch
             {
                 if (values[i] == null)
                     continue;
-                string replaceName;
-                if (CorrectionNames.TryGetValue(values[i], out replaceName))
+
+                if (_correctionNames.TryGetValue(values[i], out var replaceName))
                 {
                     result.Add(values[i]);
                     values[i] = replaceName;
@@ -150,7 +149,7 @@ namespace FuzzySearch
             List<PossibleReplace> replaces = new List<PossibleReplace>();
 
             HashSet<string> allNames = new HashSet<string>(values);
-            string[] keyWords = CorrectionNames.Values.ToArray();
+            string[] keyWords = _correctionNames.Values.ToArray();
 
             // Исключаем из выборки базовые названия
             Array.ForEach(keyWords, x => allNames.Remove(x));
@@ -169,14 +168,14 @@ namespace FuzzySearch
             _logger.Info($"Найдено {replaces.Count} похожих на базовые названия компаний");
 
             // Поиск похожих названий на замененные
-            string[] replaceWords = CorrectionNames.Keys.ToArray();
+            string[] replaceWords = _correctionNames.Keys.ToArray();
             foreach (string replaceWord in replaceWords)
             {
                 string[] sameNames = Search(replaceWord, allNames);
 
                 if (sameNames.Length > 0)
                 {
-                    replaces.Add(new PossibleReplace(sameNames, CorrectionNames[replaceWord]));
+                    replaces.Add(new PossibleReplace(sameNames, _correctionNames[replaceWord]));
                     Array.ForEach(sameNames, x => allNames.Remove(x));
                 }
             }
@@ -241,12 +240,17 @@ namespace FuzzySearch
         /// <param name="replaceWords"></param>
         public void Add(string keyWord, IEnumerable<string> replaceWords)
         {
+            if (replaceWords == null || string.IsNullOrEmpty(keyWord) == true)
+                return;
+
+            string[] words = replaceWords.ToArray();
+
             lock (_correctionsLock)
             {
-                foreach (string replaceWord in replaceWords)
-                    CorrectionNames[replaceWord] = keyWord;
+                foreach (string replaceWord in words)
+                    _correctionNames[replaceWord] = keyWord;
 
-                _logger.Info($"Добавлена замена: {string.Join(";", replaceWords)} на {keyWord}");
+                _logger.Info($"Добавлена замена: {string.Join(";", words)} на {keyWord}");
                 Save();
             }
         }
@@ -258,10 +262,12 @@ namespace FuzzySearch
         /// <returns></returns>
         public string UploadBaseNamesLib(byte[] fileArr)
         {
-            _logger.Info($"Загрузка пользовательской библиотеки. fileArr.ln: {fileArr.Length}");
+            _logger.Info("Загрузка пользовательской библиотеки");
 
             if (fileArr == null || fileArr.Length == 0)
                 return "Библиотека не загружена. Файл пуст";
+
+            _logger.Debug($"fileArr.ln: {fileArr.Length}");
 
             string text = Encoding.UTF8.GetString(fileArr);
 
@@ -269,7 +275,7 @@ namespace FuzzySearch
             {
                 try
                 {
-                    CorrectionNames = JsonConvert.DeserializeObject<Dictionary<string, string>>(text);
+                    _correctionNames = JsonConvert.DeserializeObject<Dictionary<string, string>>(text);
                 }
                 catch(Exception ex)
                 {
@@ -301,7 +307,7 @@ namespace FuzzySearch
         {
             lock (_correctionsLock)
             {
-                string text = JsonConvert.SerializeObject(CorrectionNames);
+                string text = JsonConvert.SerializeObject(_correctionNames);
                 File.WriteAllText(_fileName, text);
 
                 _logger.Info("Файл автозамен успешно записан");
@@ -321,10 +327,10 @@ namespace FuzzySearch
 
             lock (_correctionsLock)
             {
-                string[] keys = CorrectionNames.Where(x => x.Value.Equals(baseName)).Select(x => x.Key).ToArray();
+                string[] keys = _correctionNames.Where(x => x.Value.Equals(baseName)).Select(x => x.Key).ToArray();
                 _logger.Info($"Будут удалены {keys.Length} замен: {string.Join("; ", keys)}");
                 foreach (string key in keys)
-                    CorrectionNames.Remove(key);
+                    _correctionNames.Remove(key);
             }
         }
     }

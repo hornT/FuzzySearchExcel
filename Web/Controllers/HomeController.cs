@@ -25,7 +25,7 @@ namespace Web.Controllers
         private const int MIN_WORD_LENGTH = 3;
         private const int SUBTOKEN_LENGTH = 3;
 
-        private static readonly object _sync = new object();
+        private static readonly object Sync = new object();
 
         private static Fuzzy _fuzzy;
         private static Fuzzy Fuzzy
@@ -34,7 +34,7 @@ namespace Web.Controllers
             {
                 if(_fuzzy == null || _fuzzy.IsReady == false)
                 {
-                    lock(_sync)
+                    lock(Sync)
                     {
                         if (_fuzzy == null)
                         {
@@ -64,38 +64,32 @@ namespace Web.Controllers
         [HttpPost]
         public ActionResult UploadFile(string file, string fileName)
         {
-            byte[] fileArr = new byte[0];
             if (string.IsNullOrEmpty(file) == true)
                 return Json(new { message = "Файл пуст"});
 
             var fl = file.Split(',')[1];
-            fileArr = Convert.FromBase64String(fl);
+            byte[] fileArr = Convert.FromBase64String(fl);
 
             // В зависимости от разрешения файла принимаем решение - это библиотека замен или эксель файл для обработки
             if(Path.GetExtension(fileName) == ".xml")
             {
                 return Json(new { message = Fuzzy.UploadBaseNamesLib(fileArr) });
             }
-            else
-            {
-                SessionCache sc = GetSessionCache();
-                sc.File = fileArr;
-                sc.FileName = fileName;
 
-                string[] columns = ReadExcelFile();
+            SessionCache sc = GetSessionCache();
+            sc.File = fileArr;
+            sc.FileName = fileName;
 
-                return Json(new { message = "Файл успешно загружен", columns });
-            }
+            string[] columns = ReadExcelFile();
+
+            return Json(new { message = "Файл успешно загружен", columns });
         }
 
         /// <summary>
         /// Работа с файлом
         /// </summary>
-        /// <param name="fileName"></param>
         private string[] ReadExcelFile()
         {
-            string[] columns = new string[0];
-
             // https://stackoverflow.com/questions/5855813/npoi-how-to-read-file-using-npoi
 
             XSSFWorkbook xssfwb = GetSSFWorkbook();
@@ -110,7 +104,7 @@ namespace Web.Controllers
             sc.LastRowIndex = lastRowIndex;
 
             //columns = firstRow.Cells.Select(x => x.StringCellValue).ToArray();
-            columns = GetColumns(sheet, firstRowIndex, lastRowIndex);
+            var columns = GetColumns(sheet, firstRowIndex, lastRowIndex);
             _logger.Info($"Строки с {firstRowIndex} по {lastRowIndex}. Всего колонок {columns.Length}");
 
             return columns;
@@ -175,14 +169,13 @@ namespace Web.Controllers
         /// <returns></returns>
         public ActionResult ProcessFile(string columnName)
         {
-            _logger.Info($"Обработка файла по колонке ");
+            _logger.Info($"Обработка файла по колонке {columnName}");
 
             SessionCache sc = GetSessionCache();
-            int columnIndex;
-            if(sc.Columns == null || sc.Columns.TryGetValue(columnName, out columnIndex) == false)
+            if(sc.Columns == null || sc.Columns.TryGetValue(columnName, out var columnIndex) == false)
             {
                 _logger.Error($"Не удалось найти колонку {columnName}");
-                return Json(new { message = $"Не удалось найти колонку {columnName}" }); ;
+                return Json(new { message = $"Не удалось найти колонку {columnName}" });
             }
 
             _logger.Info($"Найден номер колонки: {columnIndex}");
@@ -223,7 +216,7 @@ namespace Web.Controllers
         /// Добавить компанию в базу
         /// </summary>
         /// <param name="values"></param>
-        /// <param name="selectedValue"></param>
+        /// <param name="keyWord"></param>
         /// <returns></returns>
         [HttpPost]
         public ActionResult AddCompany(string[] values, string keyWord)
@@ -266,7 +259,7 @@ namespace Web.Controllers
                 sheet.GetRow(i).GetCell(columnIndex).SetCellValue(values[i - firstRowIndex - 1]);
             }
 
-            byte[] fileBytes = null;
+            byte[] fileBytes;
             using (MemoryStream ms = new MemoryStream())
             {
                 xssfwb.Write(ms);
@@ -327,8 +320,7 @@ namespace Web.Controllers
         
         private SessionCache GetSessionCache()
         {
-            var cache = Session[CACHE_KEY] as SessionCache;
-            if(cache == null)
+            if(!(Session[CACHE_KEY] is SessionCache cache))
             {
                 Session[CACHE_KEY] = cache = new SessionCache();
             }
