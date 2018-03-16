@@ -1,7 +1,5 @@
 ﻿using FuzzySearch;
 using NLog;
-using NPOI.SS.UserModel;
-using NPOI.XSSF.UserModel;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -9,6 +7,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Web;
 using System.Web.Mvc;
+using OfficeOpenXml;
 
 namespace Web.Controllers
 {
@@ -48,14 +47,6 @@ namespace Web.Controllers
             }
         }
 
-        //public HomeController()
-        //{
-        //    //string fuzzyValue = System.Configuration.ConfigurationManager.AppSettings["thresholdSentence"];
-        //    //if (string.IsNullOrEmpty(fuzzyValue) == true ||
-        //    //    double.TryParse(fuzzyValue, NumberStyles.Any, NumberFormatInfo.InvariantInfo, out _thresholdSentence) == false)
-        //    //    _thresholdSentence = DEFAULT_FUZZYNESS;
-        //}
-
         public ActionResult Index()
         {
             return View();
@@ -80,88 +71,89 @@ namespace Web.Controllers
             sc.File = fileArr;
             sc.FileName = fileName;
 
-            string[] columns = ReadExcelFile();
+            string[] columns = ReadColumns();
 
             return Json(new { message = "Файл успешно загружен", columns });
         }
 
         /// <summary>
-        /// Работа с файлом
+        /// Получить список колонок
         /// </summary>
-        private string[] ReadExcelFile()
+        private string[] ReadColumns()
         {
-            // https://stackoverflow.com/questions/5855813/npoi-how-to-read-file-using-npoi
-
-            XSSFWorkbook xssfwb = GetSSFWorkbook();
-            ISheet sheet = xssfwb.GetSheetAt(0);
-
-            int firstRowIndex = sheet.FirstRowNum;
-            int lastRowIndex = sheet.LastRowNum;
-            //var firstRow = sheet.GetRow(firstRowIndex);
-
-            SessionCache sc = GetSessionCache();
-            sc.FirstRowIndex = firstRowIndex;
-            sc.LastRowIndex = lastRowIndex;
-
-            //columns = firstRow.Cells.Select(x => x.StringCellValue).ToArray();
-            var columns = GetColumns(sheet, firstRowIndex, lastRowIndex);
-            _logger.Info($"Строки с {firstRowIndex} по {lastRowIndex}. Всего колонок {columns.Length}");
+            var columns = GetColumns();
+            _logger.Info($"Всего колонок {columns.Length}");
 
             return columns;
         }
 
-        /// <summary>
-        /// Получить список колонок
-        /// </summary>
-        /// <param name="sheet"></param>
-        /// <param name="firstRowIndex"></param>
-        /// <param name="lastRowIndex"></param>
-        /// <returns></returns>
-        private string[] GetColumns(ISheet sheet, int firstRowIndex, int lastRowIndex)
+        private string[] GetColumns()
         {
-            var firstRow = sheet.GetRow(firstRowIndex);
-
-            string[] totalColumns = firstRow.Cells.Select(x => x.StringCellValue).ToArray();
-            Dictionary<string, int> columnsDictionary = Enumerable.Range(0, totalColumns.Length).ToDictionary(x => totalColumns[x], x => x);
-            // Регулярка отсеивает даты и числа
-            Regex reg = new Regex("^[.,\\d]+$");
-            double[] wrongCells = new double[totalColumns.Length];
-
             SessionCache sc = GetSessionCache();
-            sc.Columns = columnsDictionary;
 
-            // Пробежимся по всему документу
-            // Если в колонке есть хотя бы 1 значение: пустое, дата, число или короче 3х символов, то не учитываем эту колонку
-            for (int i = firstRowIndex + 1; i <= lastRowIndex; i++)
+            using (MemoryStream ms = new MemoryStream(sc.File))
             {
-                for(int columnIndex = 0; columnIndex < totalColumns.Length; columnIndex++)
+                using (ExcelPackage package = new ExcelPackage(ms))
                 {
-                    var cell = sheet.GetRow(i).GetCell(columnIndex);
-                    if (cell == null)
+                    ExcelWorksheet workSheet = package.Workbook.Worksheets.First();
+
+                    int rowStart = workSheet.Dimension.Start.Row;
+                    int rowEnd = workSheet.Dimension.End.Row;
+                    int columnStart = workSheet.Dimension.Start.Column;
+                    int columnEnd = workSheet.Dimension.End.Column;
+
+                    string[] totalColumns = new string[workSheet.Dimension.Columns];
+                    for (int i = columnStart; i <= columnEnd; i++)
                     {
-                        //wrongCells[columnIndex]++;
-                        continue;
+                        totalColumns[i - columnStart] = workSheet.Cells[rowStart, i].Value?.ToString();
                     }
 
-                    string value = cell.ToString();
-                    CellType cellType = sheet.GetRow(i).GetCell(columnIndex).CellType;
-                    if (cellType == CellType.Numeric ||/* string.IsNullOrEmpty(value) ||*/ value.Length < 3 || reg.IsMatch(value))
-                        wrongCells[columnIndex]++;
+                    Dictionary<string, int> columnsDictionary = Enumerable.Range(0, totalColumns.Length)
+                        .ToDictionary(x => totalColumns[x], x => x);
+                    // Регулярка отсеивает даты и числа
+                    Regex reg = new Regex("^[.,\\d]+$");
+                    double[] wrongCells = new double[totalColumns.Length];
+
+                    sc.Columns = columnsDictionary;
+                    sc.FirstRowIndex = rowStart;
+                    sc.LastRowIndex = rowEnd;
+                    sc.FirstColumnIndex = columnStart;
+
+                    // Пробежимся по всему документу
+                    // Если в колонке есть хотя бы 1 значение: пустое, дата, число или короче 3х символов, то не учитываем эту колонку
+                    // TODO проверить числа
+                    for (int i = rowStart + 1; i <= rowEnd; i++)
+                    {
+                        for (int columnIndex = 0; columnIndex < totalColumns.Length; columnIndex++)
+                        {
+                            object cell = workSheet.Cells[i, columnIndex + columnStart].Value;
+                            if (cell == null)
+                            {
+                                continue;
+                            }
+
+                            string value = cell.ToString();
+                            //CellType cellType = sheet.GetRow(i).GetCell(columnIndex).CellType;
+                            if ( /*cellType == CellType.Numeric ||*/ /* string.IsNullOrEmpty(value) ||*/
+                                value.Length < 3 || reg.IsMatch(value))
+                                wrongCells[columnIndex]++;
+                        }
+                    }
+
+                    // Вычисляем % ненужных наименований в колонке
+                    List<string> columns = new List<string>();
+                    for (int i = 0; i < totalColumns.Length; i++)
+                    {
+                        double wrongPercent = wrongCells[i] / rowEnd * 100;
+                        if (wrongPercent < WRONG_COLUMN_PERCENT)
+                            columns.Add(totalColumns[i]);
+                    }
+
+                    return columns.ToArray();
                 }
             }
-
-            // Вычисляем % ненужных наименований в колонке
-            List<string> columns = new List<string>();
-            for (int i = 0; i < totalColumns.Length; i++)
-            {
-                double wrongPercent = wrongCells[i] / lastRowIndex * 100;
-                if (wrongPercent < WRONG_COLUMN_PERCENT)
-                    columns.Add(totalColumns[i]);
-            }
-
-            return columns.ToArray();
         }
-        
+
         /// <summary>
         /// Первоначальная обработка файла
         /// </summary>
@@ -180,7 +172,7 @@ namespace Web.Controllers
 
             _logger.Info($"Найден номер колонки: {columnIndex}");
 
-            PrepareResult prepareResult = PrepareAutoCorrection(columnIndex);
+            PrepareResult prepareResult = PrepareAutoCorrection(columnIndex + sc.FirstColumnIndex);
             if (prepareResult == null)
                 return Json(new { message = "Не удалось обработать файл"});
 
@@ -199,14 +191,21 @@ namespace Web.Controllers
             int lastRowIndex = sc.LastRowIndex;
             sc.ColumnIndex = columnIndex;
 
-            XSSFWorkbook xssfwb = GetSSFWorkbook();
-            ISheet sheet = xssfwb.GetSheetAt(0);
-
             string[] values = new string[lastRowIndex - firstRowIndex];
-            for (int i = firstRowIndex + 1; i <= lastRowIndex; i++)
+
+            using (MemoryStream ms = new MemoryStream(sc.File))
             {
-                values[i - firstRowIndex - 1] = sheet.GetRow(i).GetCell(columnIndex).ToString();
+                using (ExcelPackage package = new ExcelPackage(ms))
+                {
+                    ExcelWorksheet workSheet = package.Workbook.Worksheets.First();
+
+                    for (int i = firstRowIndex + 1; i <= lastRowIndex; i++)
+                    {
+                        values[i - firstRowIndex - 1] = workSheet.Cells[i, columnIndex].Value?.ToString();
+                    }
+                }
             }
+            
             sc.Values = values;
             
             return Fuzzy.Prepare(values);
@@ -247,23 +246,20 @@ namespace Web.Controllers
 
             Fuzzy.Replace(values);
 
-            var valuesArr = new object[values.Length, 1];
-            for (int i = 0; i < values.Length; i++)
-                valuesArr[i, 0] = values[i];
-
-            XSSFWorkbook xssfwb = GetSSFWorkbook();
-
-            ISheet sheet = xssfwb.GetSheetAt(0);
-            for (int i = firstRowIndex + 1; i <= lastRowIndex; i++)
-            {
-                sheet.GetRow(i).GetCell(columnIndex).SetCellValue(values[i - firstRowIndex - 1]);
-            }
-
             byte[] fileBytes;
-            using (MemoryStream ms = new MemoryStream())
+            using (MemoryStream ms = new MemoryStream(sc.File))
             {
-                xssfwb.Write(ms);
-                fileBytes = ms.ToArray();
+                using (ExcelPackage package = new ExcelPackage(ms))
+                {
+                    ExcelWorksheet workSheet = package.Workbook.Worksheets.First();
+
+                    for (int i = firstRowIndex + 1; i <= lastRowIndex; i++)
+                    {
+                        workSheet.Cells[i, columnIndex].Value = values[i - firstRowIndex - 1];
+                    }
+
+                    fileBytes = package.GetAsByteArray();
+                }
             }
 
             string originalFileName = sc.FileName;
@@ -299,25 +295,7 @@ namespace Web.Controllers
 
             return Json(new { values = result }, JsonRequestBehavior.AllowGet);
         }
-
-        private XSSFWorkbook GetSSFWorkbook()
-        {
-            SessionCache sc = GetSessionCache();
-            byte[] buff = sc.File;
-            using (MemoryStream ms = new MemoryStream(buff))
-            {
-                try
-                {
-                    return new XSSFWorkbook(ms);
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error(ex);
-                    throw;
-                }
-            }
-        }
-        
+       
         private SessionCache GetSessionCache()
         {
             if(!(Session[CACHE_KEY] is SessionCache cache))
@@ -348,6 +326,8 @@ namespace Web.Controllers
         public int FirstRowIndex { get; set; }
 
         public int LastRowIndex { get; set; }
+
+        public int FirstColumnIndex { get; set; }
 
         public int ColumnIndex { get; set; }
 
