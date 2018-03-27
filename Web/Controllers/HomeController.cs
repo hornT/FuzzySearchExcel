@@ -103,11 +103,16 @@ namespace Web.Controllers
                     int columnEnd = workSheet.Dimension.End.Column;
 
                     string[] totalColumns = new string[workSheet.Dimension.Columns];
+                    int columnNumber = 1;
                     for (int i = columnStart; i <= columnEnd; i++)
                     {
-                        totalColumns[i - columnStart] = workSheet.Cells[rowStart, i].Value?.ToString();
+                        string columnName = workSheet.Cells[rowStart, i].Value?.ToString();
+                        // Колонки без названия (null) меняем на автогенерируемое
+                        if (columnName == null)
+                            columnName = $"КолонкаБезНзвания{columnNumber++}";
+                        totalColumns[i - columnStart] = columnName;
                     }
-
+                    // TODO определить колонки с одинаковыми названиями и изменить их
                     Dictionary<string, int> columnsDictionary = Enumerable.Range(0, totalColumns.Length)
                         .ToDictionary(x => totalColumns[x], x => x);
                     // Регулярка отсеивает даты и числа
