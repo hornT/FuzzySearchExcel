@@ -112,9 +112,12 @@ namespace Web.Controllers
                             columnName = $"КолонкаБезНзвания{columnNumber++}";
                         totalColumns[i - columnStart] = columnName;
                     }
-                    // TODO определить колонки с одинаковыми названиями и изменить их
+
+                    // определить колонки с одинаковыми названиями и изменить их
+                    ReplaceDuplicateColumns(totalColumns);
                     Dictionary<string, int> columnsDictionary = Enumerable.Range(0, totalColumns.Length)
                         .ToDictionary(x => totalColumns[x], x => x);
+
                     // Регулярка отсеивает даты и числа
                     Regex reg = new Regex("^[.,\\d]+$");
                     double[] wrongCells = new double[totalColumns.Length];
@@ -155,6 +158,31 @@ namespace Web.Controllers
                     }
 
                     return columns.ToArray();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Переименовать дубликаты колонок
+        /// </summary>
+        /// <param name="columns"></param>
+        private void ReplaceDuplicateColumns(string[] columns)
+        {
+            string[] duplicateColumns = columns
+                .GroupBy(x => x)
+                .Where(x => x.Count() > 1)
+                .Select(x => x.Key)
+                .ToArray();
+
+            if (duplicateColumns.Length > 0)
+            {
+                HashSet<string> hs = new HashSet<string>(duplicateColumns);
+                for (int i = 0; i < columns.Length; i++)
+                {
+                    if(hs.Contains(columns[i]) == false)
+                        continue;
+
+                    columns[i] = columns[i] + i.ToString();
                 }
             }
         }
