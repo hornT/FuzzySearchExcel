@@ -75,6 +75,7 @@ namespace Web.Controllers
             sc.FileName = fileName;
 
             string[] columns = ReadColumns();
+            //GC.Collect();
 
             return Json(new { message = "Файл успешно загружен", columns });
         }
@@ -135,69 +136,70 @@ namespace Web.Controllers
             {
                 using (ExcelPackage package = new ExcelPackage(ms))
                 {
-                    ExcelWorksheet workSheet = package.Workbook.Worksheets.First();
-
-                    int rowStart = workSheet.Dimension.Start.Row;
-                    int rowEnd = workSheet.Dimension.End.Row;
-                    int columnStart = workSheet.Dimension.Start.Column;
-                    int columnEnd = workSheet.Dimension.End.Column;
-
-                    string[] totalColumns = new string[workSheet.Dimension.Columns];
-                    int columnNumber = 1;
-                    for (int i = columnStart; i <= columnEnd; i++)
+                    using (ExcelWorksheet workSheet = package.Workbook.Worksheets.First())
                     {
-                        string columnName = workSheet.Cells[rowStart, i].Value?.ToString();
-                        // Колонки без названия (null) меняем на автогенерируемое
-                        if (columnName == null)
-                            columnName = $"КолонкаБезНзвания{columnNumber++}";
-                        totalColumns[i - columnStart] = columnName;
-                    }
+                        int rowStart = workSheet.Dimension.Start.Row;
+                        int rowEnd = workSheet.Dimension.End.Row;
+                        int columnStart = workSheet.Dimension.Start.Column;
+                        int columnEnd = workSheet.Dimension.End.Column;
 
-                    // определить колонки с одинаковыми названиями и изменить их
-                    ReplaceDuplicateColumns(totalColumns);
-                    Dictionary<string, int> columnsDictionary = Enumerable.Range(0, totalColumns.Length)
-                        .ToDictionary(x => totalColumns[x], x => x);
-
-                    // Регулярка отсеивает даты и числа
-                    Regex reg = new Regex("^[.,\\d]+$");
-                    double[] wrongCells = new double[totalColumns.Length];
-
-                    sc.Columns = columnsDictionary;
-                    sc.FirstRowIndex = rowStart;
-                    sc.LastRowIndex = rowEnd;
-                    sc.FirstColumnIndex = columnStart;
-
-                    // Пробежимся по всему документу
-                    // Если в колонке есть хотя бы 1 значение: пустое, дата, число или короче 3х символов, то не учитываем эту колонку
-                    // TODO проверить числа
-                    for (int i = rowStart + 1; i <= rowEnd; i++)
-                    {
-                        for (int columnIndex = 0; columnIndex < totalColumns.Length; columnIndex++)
+                        string[] totalColumns = new string[workSheet.Dimension.Columns];
+                        int columnNumber = 1;
+                        for (int i = columnStart; i <= columnEnd; i++)
                         {
-                            object cell = workSheet.Cells[i, columnIndex + columnStart].Value;
-                            if (cell == null)
-                            {
-                                continue;
-                            }
-
-                            string value = cell.ToString();
-                            //CellType cellType = sheet.GetRow(i).GetCell(columnIndex).CellType;
-                            if ( /*cellType == CellType.Numeric ||*/ /* string.IsNullOrEmpty(value) ||*/
-                                value.Length < 3 || reg.IsMatch(value))
-                                wrongCells[columnIndex]++;
+                            string columnName = workSheet.Cells[rowStart, i].Value?.ToString();
+                            // Колонки без названия (null) меняем на автогенерируемое
+                            if (columnName == null)
+                                columnName = $"КолонкаБезНзвания{columnNumber++}";
+                            totalColumns[i - columnStart] = columnName;
                         }
-                    }
 
-                    // Вычисляем % ненужных наименований в колонке
-                    List<string> columns = new List<string>();
-                    for (int i = 0; i < totalColumns.Length; i++)
-                    {
-                        double wrongPercent = wrongCells[i] / rowEnd * 100;
-                        if (wrongPercent < WRONG_COLUMN_PERCENT)
-                            columns.Add(totalColumns[i]);
-                    }
+                        // определить колонки с одинаковыми названиями и изменить их
+                        ReplaceDuplicateColumns(totalColumns);
+                        Dictionary<string, int> columnsDictionary = Enumerable.Range(0, totalColumns.Length)
+                            .ToDictionary(x => totalColumns[x], x => x);
 
-                    return columns.ToArray();
+                        // Регулярка отсеивает даты и числа
+                        Regex reg = new Regex("^[.,\\d]+$");
+                        double[] wrongCells = new double[totalColumns.Length];
+
+                        sc.Columns = columnsDictionary;
+                        sc.FirstRowIndex = rowStart;
+                        sc.LastRowIndex = rowEnd;
+                        sc.FirstColumnIndex = columnStart;
+
+                        // Пробежимся по всему документу
+                        // Если в колонке есть хотя бы 1 значение: пустое, дата, число или короче 3х символов, то не учитываем эту колонку
+                        // TODO проверить числа
+                        for (int i = rowStart + 1; i <= rowEnd; i++)
+                        {
+                            for (int columnIndex = 0; columnIndex < totalColumns.Length; columnIndex++)
+                            {
+                                object cell = workSheet.Cells[i, columnIndex + columnStart].Value;
+                                if (cell == null)
+                                {
+                                    continue;
+                                }
+
+                                string value = cell.ToString();
+                                //CellType cellType = sheet.GetRow(i).GetCell(columnIndex).CellType;
+                                if ( /*cellType == CellType.Numeric ||*/ /* string.IsNullOrEmpty(value) ||*/
+                                    value.Length < 3 || reg.IsMatch(value))
+                                    wrongCells[columnIndex]++;
+                            }
+                        }
+
+                        // Вычисляем % ненужных наименований в колонке
+                        List<string> columns = new List<string>();
+                        for (int i = 0; i < totalColumns.Length; i++)
+                        {
+                            double wrongPercent = wrongCells[i] / rowEnd * 100;
+                            if (wrongPercent < WRONG_COLUMN_PERCENT)
+                                columns.Add(totalColumns[i]);
+                        }
+
+                        return columns.ToArray();
+                    }
                 }
             }
         }
@@ -326,12 +328,20 @@ namespace Web.Controllers
                 {
                     ExcelWorksheet workSheet = package.Workbook.Worksheets.First();
 
-                    for (int i = firstRowIndex + 1; i <= lastRowIndex; i++)
+                    try
                     {
-                        workSheet.Cells[i, columnIndex].Value = values[i - firstRowIndex - 1];
-                    }
+                        for (int i = firstRowIndex + 1; i <= lastRowIndex; i++)
+                        {
+                            workSheet.Cells[i, columnIndex].Value = values[i - firstRowIndex - 1];
+                        }
 
-                    fileBytes = package.GetAsByteArray();
+                        fileBytes = package.GetAsByteArray();
+                    }
+                    catch (Exception e)
+                    {
+                        _logger.Error(e.Message);
+                        throw;
+                    }
                 }
             }
 
