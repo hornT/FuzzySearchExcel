@@ -36,11 +36,6 @@ namespace FuzzySearch
 
         public bool IsReady { get; }
 
-        //public Fuzzy() : this(FILE_NAME)
-        //{
-
-        //}
-
         public Fuzzy(string fileName, double aThresholdSentence, double aThresholdWord, int minWordLength, int subtokenLength)
         {
             _fileName = fileName;
@@ -108,14 +103,16 @@ namespace FuzzySearch
         /// Получить файл с библиотекой наименований
         /// </summary>
         /// <returns></returns>
-        public byte[] GetLibFile()
+        public Dictionary<string, string> GetLibFile()
         {
-            lock (_correctionsLock)
-            {
-                string text = JsonConvert.SerializeObject(_correctionNames);
+            //lock (_correctionsLock)
+            //{
+            //    string text = JsonConvert.SerializeObject(_correctionNames);
 
-                return Encoding.Default.GetBytes(text);
-            }
+            //    return Encoding.Default.GetBytes(text);
+            //}
+
+            return _correctionNames;
         }
 
         /// <summary>
@@ -258,24 +255,28 @@ namespace FuzzySearch
         /// <summary>
         /// Загрузить пользовательскую библиотеку имен
         /// </summary>
-        /// <param name="fileArr"></param>
+        /// <param name="lib"></param>
         /// <returns></returns>
-        public string UploadBaseNamesLib(byte[] fileArr)
+        public string UploadBaseNamesLib(Dictionary<string, string> lib)
         {
             _logger.Info("Загрузка пользовательской библиотеки");
 
-            if (fileArr == null || fileArr.Length == 0)
+            //if (fileArr == null || fileArr.Length == 0)
+            //    return "Библиотека не загружена. Файл пуст";
+
+            if(lib == null)
                 return "Библиотека не загружена. Файл пуст";
 
-            _logger.Debug($"fileArr.ln: {fileArr.Length}");
+            _logger.Debug($"fileArr.ln: {lib.Count}");
 
-            string text = Encoding.UTF8.GetString(fileArr);
+            //string text = Encoding.UTF8.GetString(fileArr);
 
             lock (_correctionsLock)
             {
                 try
                 {
-                    _correctionNames = JsonConvert.DeserializeObject<Dictionary<string, string>>(text);
+                    //_correctionNames = JsonConvert.DeserializeObject<Dictionary<string, string>>(text);
+                    _correctionNames = lib;
                 }
                 catch(Exception ex)
                 {

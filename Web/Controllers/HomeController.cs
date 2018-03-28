@@ -14,6 +14,8 @@ namespace Web.Controllers
     public class HomeController : Controller
     {
         private const string CACHE_KEY = "cache";
+
+        private const string LIB_FILE_NAME = "Lib.xls";
         //private const double DEFAULT_FUZZYNESS = 0.7;
         private const int WRONG_COLUMN_PERCENT = 20;
 
@@ -62,9 +64,10 @@ namespace Web.Controllers
             byte[] fileArr = Convert.FromBase64String(fl);
 
             // В зависимости от разрешения файла принимаем решение - это библиотека замен или эксель файл для обработки
-            if(Path.GetExtension(fileName) == ".xml")
+            if(fileName == LIB_FILE_NAME)
             {
-                return Json(new { message = Fuzzy.UploadBaseNamesLib(fileArr) });
+                Dictionary<string, string> lib = GetLibDictionary(fileArr);
+                return Json(new { message = Fuzzy.UploadBaseNamesLib(lib) });
             }
 
             SessionCache sc = GetSessionCache();
@@ -74,6 +77,43 @@ namespace Web.Controllers
             string[] columns = ReadColumns();
 
             return Json(new { message = "Файл успешно загружен", columns });
+        }
+
+        /// <summary>
+        /// Из пользовательского файла получить библиотеку наименований
+        /// </summary>
+        /// <param name="fileArr"></param>
+        /// <returns></returns>
+        private Dictionary<string, string> GetLibDictionary(byte[] fileArr)
+        {
+            Dictionary<string, string> result = new Dictionary<string, string>();
+
+            using (MemoryStream ms = new MemoryStream(fileArr))
+            {
+                using (ExcelPackage package = new ExcelPackage(ms))
+                {
+                    ExcelWorksheet workSheet = package.Workbook.Worksheets.First();
+
+                    int rowStart = workSheet.Dimension.Start.Row;
+                    int rowEnd = workSheet.Dimension.End.Row;
+                    int columnStart = workSheet.Dimension.Start.Column;
+                    int columnEnd = workSheet.Dimension.End.Column;
+
+                    for (int i = rowStart + 1; i <= rowEnd; i++)
+                    {
+                        object name = workSheet.Cells[i, columnStart].Value;
+                        object baseName = workSheet.Cells[i, columnEnd].Value;
+                        if (name == null || baseName == null)
+                        {
+                            continue;
+                        }
+
+                        result[name.ToString()] = baseName.ToString();
+                    }
+
+                    return result;
+                }
+            }
         }
 
         /// <summary>
@@ -306,9 +346,27 @@ namespace Web.Controllers
         /// <returns></returns>
         public FileResult DownloadLib()
         {
-            byte[] fileBytes = Fuzzy.GetLibFile();
+            byte[] fileBytes = { };
+            Dictionary<string, string> lib = Fuzzy.GetLibFile();
 
-            return File(fileBytes, System.Net.Mime.MediaTypeNames.Application.Octet, "lib.xml");
+            using (ExcelPackage package = new ExcelPackage())
+            {
+                ExcelWorksheet ws = package.Workbook.Worksheets.Add("Data");
+
+                ws.Cells["A1"].Value = "Значение";
+                ws.Cells["B1"].Value = "Базовое значение";
+
+                int i = 2;
+                foreach (KeyValuePair<string, string> row in lib)
+                {
+                    ws.Cells[i, 1].Value = row.Key;
+                    ws.Cells[i++, 2].Value = row.Value;
+                }
+
+                fileBytes = package.GetAsByteArray();
+            }
+
+            return File(fileBytes, System.Net.Mime.MediaTypeNames.Application.Octet, LIB_FILE_NAME);
         }
 
         /// <summary>
